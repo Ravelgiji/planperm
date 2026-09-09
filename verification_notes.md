@@ -1,0 +1,10 @@
+# Map Flow Verification Notes
+
+- The initial workspace presents map search and click-to-pin controls while keeping the assistant hidden.
+- Searching for `Rathmines, Dublin` places a selected-site marker and reveals the assistant and property-context controls beside the map.
+- The selected-site state issues a new nearby-planning request and displays the explicit “Updating nearby records” feedback while the public ArcGIS response is pending.
+- The completed query for Rathmines, Dublin returned 49 nearby applications, a 70% approval rate, and 14 refusals. The map exposed individual application markers and the adjacent assistant context controls after the response resolved.
+- A second search for Clontarf, Dublin then returned a distinct result: 179 nearby applications, an 81% approval rate, and 26 refusals. The visible map points and site-level metrics changed with the second selection, confirming that repeat pinning now refreshes the data rather than retaining the prior result.
+- The application-detail dialog was verified with the Rathmines result set. It renders the reference, authority, decision, distance, application type, received and decision dates, proposal, and original-source control. The confirmed source destination for the selected record is the authoritative planning-detail page at `https://planning.agileapplications.ie/southdublin/application-details/67761`.
+- Nearby map points now use Google Maps' standard marker click model, which opens the same shared detail dialog as the application list. This replaces the previous advanced-marker event path that did not reliably surface an application selection through the map host.
+- The rendered nearby map marker’s DOM click pathway was exercised directly after the standard-marker fallback was added. It opened the **Dodder Road Lower** planning-application dialog, including the source control. Activating that control navigated to the expected authoritative Citizen Portal Planning URL: `https://planning.agileapplications.ie/southdublin/application-details/67761`.
