@@ -57,6 +57,7 @@ class PlanningState(TypedDict, total=False):
     checklist: list[dict[str, str]]
     # Outputs
     advice: str
+    draft_brief: str
     draft_text: str
     draft_review: str
     response: str

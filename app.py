@@ -355,6 +355,19 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             with st.chat_message("assistant"):
                 st.write(content)
 
+        # Offer a downloadable preparation brief when the advisor ran
+        draft_brief = result.get("draft_brief", "")
+        if draft_brief:
+            st.session_state["last_draft_brief"] = draft_brief
+
+    if st.session_state.get("last_draft_brief"):
+        st.download_button(
+            "⬇ Download preparation brief",
+            data=st.session_state["last_draft_brief"],
+            file_name="planperm_preparation_brief.md",
+            mime="text/markdown",
+        )
+
 
 ensure_state()
 masthead_brand, masthead_theme = st.columns([5.7, 0.8], vertical_alignment="center")

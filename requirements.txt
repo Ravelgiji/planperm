@@ -10,6 +10,5 @@ pdfplumber>=0.11,<1.0
 langgraph>=0.2
 langchain-core>=0.3
 langchain-openai>=0.2
-
-# Optional: enables LLM-backed responses (agents fall back to deterministic output without it)
-# openai>=1.82,<2.0
+openai>=1.82,<2.0
+pydantic>=2.0,<3.0

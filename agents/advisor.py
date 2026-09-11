@@ -20,6 +20,7 @@ from agents.helpers import (
     resolve_authority,
     site_candidates,
 )
+from agents.guardrails import HARDENING_SUFFIX, sanitise_input, scrub_output
 from planning_data import fetch_nearby_applications, summarize_applications
 
 
@@ -51,25 +52,27 @@ class PlanningState(TypedDict, total=False):
 
 SYSTEM_PROMPT = """You are a cautious Irish planning permit preparation advisor.
 
+Your job is to give the user SPECIFIC, ACTIONABLE preparation guidance based on the real data provided. Do not just list generic steps — interpret the data.
+
+Structure every response in these sections:
+
+1. **Your authority & site context** — Name the council, the jurisdiction, and what the nearby record data shows (approval rate, volume). One paragraph.
+
+2. **What similar applications tell you** — Look at the precedents provided. What did granted applications have in common? What reasons appear in refusals? Cite specific record references and decisions. If a precedent was refused, say why (from the description). If there are no precedents, say so plainly.
+
+3. **What your council specifically requires** — Extract concrete requirements from the authority guidance text: which forms, what map scales, how many copies, which newspapers for notices, what fees, what the e-planning portal URL is. Do not say "check the guidance" — pull out the actual details if they are in the text provided.
+
+4. **Risks to watch for** — Based on nearby refusals and the site context, flag specific issues: drainage, heritage, access, protected structures, density. Only flag what appears in the data.
+
+5. **Your preparation checklist** — The concrete next steps, ordered by what to do first. Be specific: "Get an OS map at 1:1000 scale with the site outlined in red" not "prepare location materials."
+
 Rules:
-- Provide general informational support only.
 - Never predict approval or give legal advice.
-- Never invent requirements or deadlines.
-- Separate published-record facts from general guidance.
-- If you reference a record, cite its reference number and decision.
-- When authority guidance text is provided, reference it but note it may be outdated.
-- End every response with: "Informational preparation support only — not legal, planning, architectural, or financial advice."
-
-You will receive:
-- The site location, jurisdiction, and responsible planning authority.
-- A summary of nearby planning applications (approval rate, counts).
-- Spatial candidates (records very close to the pin).
-- Keyword-matched precedents (similar past applications).
-- Authority guidance text (if retrieved).
-- A preparation checklist.
-- The user's specific question (if any).
-
-Base your answer on the data provided. Do not hallucinate records.
+- Never invent requirements, records, or deadlines.
+- Cite record references when you mention a precedent.
+- If the guidance text mentions specific fees, forms, or deadlines, quote them.
+- If information is missing, say what is missing rather than guessing.
+- End with: "Informational preparation support only — not legal, planning, architectural, or financial advice."
 """
 
 
@@ -183,7 +186,7 @@ def _ask_llm(state: PlanningState) -> str:
     question = state.get("question") or f"What do I need to prepare for a {state.get('construction_type', 'planning application')}?"
     context = _build_context(state)
 
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT + HARDENING_SUFFIX}]
 
     # Prior turns, so a follow-up reads as a follow-up. Trimmed to the last few
     # exchanges; the site context is rebuilt fresh each turn regardless.
@@ -204,6 +207,77 @@ def _ask_llm(state: PlanningState) -> str:
     return response.choices[0].message.content or _fallback_advice(state)
 
 
+def _build_draft_brief(state: PlanningState) -> str:
+    """Compile the advisor's findings into a downloadable preparation brief."""
+    authority = state.get("authority", "Authority not resolved")
+    jurisdiction = state.get("jurisdiction", "Unknown")
+    ctype = state.get("construction_type", "Proposed development")
+    summary = state.get("summary", {})
+    candidates = state.get("candidates", [])
+    precedents = state.get("precedents", [])
+    checklist = state.get("checklist", [])
+    sources = state.get("sources", [])
+
+    lines = [
+        "# PlanPerm — Preparation Brief",
+        f"**DRAFT FOR REVIEW — NOT A SUBMISSION**\n",
+        f"## Site & Authority",
+        f"- Coordinates: {state.get('lat', '?')}, {state.get('lng', '?')}",
+        f"- Authority: {authority}",
+        f"- Jurisdiction: {jurisdiction}",
+        f"- Proposal: {ctype}",
+        f"- Site condition: {state.get('site_condition', 'Not specified')}\n",
+    ]
+
+    if summary:
+        lines.append("## Nearby Planning Context")
+        lines.append(f"- {summary.get('total', 0)} applications within {state.get('radius_km', 2.0)} km")
+        lines.append(f"- Approval rate: {summary.get('approval_rate', 'N/A')}%")
+        lines.append(f"- Granted: {summary.get('granted', 0)} | Refused: {summary.get('refused', 0)} | Pending: {summary.get('pending', 0)}\n")
+
+    if candidates:
+        lines.append("## Records Near Your Pin (within 100m)")
+        for c in candidates[:6]:
+            lines.append(f"- **{c['ref']}** ({c['decision']}) — {c['distance_m']}m — {c['description'][:150]}")
+        lines.append("")
+
+    if precedents:
+        lines.append("## Similar Past Applications")
+        granted = [p for p in precedents if p["decision"] == "GRANTED"]
+        refused = [p for p in precedents if p["decision"] == "REFUSED"]
+        if granted:
+            lines.append(f"### Granted ({len(granted)})")
+            for p in granted[:4]:
+                lines.append(f"- **{p['application_ref']}** — {p['description'][:200]}")
+                if p.get("link"):
+                    lines.append(f"  Source: {p['link']}")
+        if refused:
+            lines.append(f"### Refused ({len(refused)})")
+            for p in refused[:4]:
+                lines.append(f"- **{p['application_ref']}** — {p['description'][:200]}")
+                if p.get("link"):
+                    lines.append(f"  Source: {p['link']}")
+        lines.append("")
+
+    if checklist:
+        lines.append("## Preparation Checklist")
+        for item in checklist:
+            lines.append(f"- [ ] **{item['title']}** — {item['guidance']}")
+        lines.append("")
+
+    if sources:
+        lines.append("## Authority Source Links")
+        for s in sources:
+            lines.append(f"- [{s['title']}]({s['url']})")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("*Informational preparation support only — not legal, planning, architectural, or financial advice.*")
+    lines.append(f"*Generated by PlanPerm from live data.*")
+
+    return "\n".join(lines)
+
+
 # -- LangGraph node ------------------------------------------------------------
 
 def advisor_node(state: PlanningState) -> PlanningState:
@@ -213,6 +287,14 @@ def advisor_node(state: PlanningState) -> PlanningState:
     lng = state["lng"]
     radius = state.get("radius_km", 2.0)
     ctype = state.get("construction_type", "")
+
+    # Guard: sanitise user input before anything touches the LLM
+    question = state.get("question", "")
+    if question:
+        cleaned, blocked = sanitise_input(question)
+        if blocked:
+            return {"advice": cleaned, "errors": errors}
+        state = {**state, "question": cleaned}
 
     # 1. Resolve authority from boundary
     resolution = resolve_authority(lat, lng)
@@ -264,12 +346,15 @@ def advisor_node(state: PlanningState) -> PlanningState:
     merged = {**state, **state_update}
     if os.environ.get("OPENAI_API_KEY"):
         try:
-            state_update["advice"] = _ask_llm(merged)
+            state_update["advice"] = scrub_output(_ask_llm(merged))
         except Exception as e:
             errors.append(f"LLM call failed: {e}")
             state_update["advice"] = _fallback_advice(merged)
             state_update["errors"] = errors
     else:
         state_update["advice"] = _fallback_advice(merged)
+
+    # 6. Build downloadable preparation brief
+    state_update["draft_brief"] = _build_draft_brief({**state, **state_update})
 
     return state_update

@@ -169,8 +169,14 @@ Do not answer the planning question. Only classify the route."""},
 def semantic_router_node(state: dict[str, Any]) -> dict[str, Any]:
     """LangGraph node: classify one route, but do not perform specialist work."""
 
-    decision = classify_with_llm(str(state.get("question") or ""), state)
-    decision = {**decision, "method": "openai_structured"} if decision else _fallback(str(state.get("question") or ""))
+    raw_question = str(state.get("question") or "")
+    from agents.guardrails import sanitise_input
+    cleaned, blocked = sanitise_input(raw_question)
+    if blocked:
+        return {"orchestrator": {"route": "clarify", "confidence": "high", "rationale": "Input blocked by guardrails.", "missing_context": [], "split_task": False, "secondary_route": "none", "method": "guardrail"}, "response": cleaned}
+
+    decision = classify_with_llm(cleaned, state)
+    decision = {**decision, "method": "openai_structured"} if decision else _fallback(cleaned)
     if decision["route"] == "draft" and not state.get("pdf_path"):
         decision = {
             **decision,

@@ -33,6 +33,7 @@ from typing import Any
 import requests
 
 from agents.helpers import authority_sources, resolve_authority
+from agents.guardrails import HARDENING_SUFFIX, scrub_output
 from core.env import llm_configured
 from core.watch import compare, fingerprint, read_index
 from core.weekly_list import fetch_document_text, is_received_list
@@ -386,7 +387,7 @@ def _ask_llm(context: str, question: str) -> str:
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT + HARDENING_SUFFIX},
             {"role": "user", "content": f"{context}\n\nRequest: {question}"},
         ],
         temperature=0.2,
@@ -491,7 +492,7 @@ def watch_node(state: dict[str, Any]) -> dict[str, Any]:
     briefing = ""
     if llm_configured():
         try:
-            briefing = _ask_llm(context, question)
+            briefing = scrub_output(_ask_llm(context, question))
         except Exception as exc:                  # noqa: BLE001 - fall back, never fail
             errors.append(f"LLM call failed: {exc}")
 

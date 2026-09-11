@@ -11,6 +11,7 @@ import os
 from typing import Any, TypedDict
 
 from agents.helpers import extract_pdf_file, find_precedents, site_candidates
+from agents.guardrails import HARDENING_SUFFIX, sanitise_input, scrub_output
 from planning_data import fetch_nearby_applications, summarize_applications
 
 
@@ -122,7 +123,7 @@ def _ask_llm_review(state: dict[str, Any]) -> str:
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": REVIEW_PROMPT},
+            {"role": "system", "content": REVIEW_PROMPT + HARDENING_SUFFIX},
             {"role": "user", "content": context},
         ],
         temperature=0.2,
@@ -178,7 +179,7 @@ def draft_review_node(state: PlanningState) -> PlanningState:
     merged = {**state, **state_update}
     if os.environ.get("OPENAI_API_KEY") and draft_text:
         try:
-            state_update["draft_review"] = _ask_llm_review(merged)
+            state_update["draft_review"] = scrub_output(_ask_llm_review(merged))
         except Exception as e:
             errors.append(f"LLM review failed: {e}")
             state_update["draft_review"] = _fallback_review(merged)
