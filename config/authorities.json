@@ -1,0 +1,1936 @@
+{
+  "registry_version": "2026.09.04-all-island",
+  "scope": "All-island planning authority directory; Republic of Ireland and Northern Ireland are distinct jurisdictions",
+  "authorities": [
+    {
+      "id": "carlow-cc",
+      "name": "Carlow County Council",
+      "kind": "county_council",
+      "official_homepage": "https://carlow.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/CarlowCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://carlow.ie/planning-notices",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://carlow.ie/planning-and-building/development-management/planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "The official Carlow County Council website links to a dedicated \"Weekly Planning Notices\" page for PDF lists and uses the ePlan system for application searches.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "cavan-cc",
+      "name": "Cavan County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.cavancoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/CavanCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.cavancoco.ie/services/planning-building/planning-permission/weekly-planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.cavancoco.ie/services/planning-building/planning-permission/applying-for-planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning pages were verified to link directly to the ePlanning search portal, a dedicated weekly list page with downloadable ZIP files, and comprehensive application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "clare-cc",
+      "name": "Clare County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.clarecoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "http://www.eplanning.ie/ClareCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.clarecoco.ie/planning-and-building/make-planning-application/search-planning-applications/planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.clarecoco.ie/planning-and-building/make-planning-application",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council website planning section provides direct links to an ePlanning search portal, weekly PDF lists, and comprehensive application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "cork-city-council",
+      "name": "Cork City Council",
+      "kind": "city_council",
+      "official_homepage": "https://www.corkcity.ie/en/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.corkcity.ie/en/council-services/services/planning/search-for-a-planning-application/",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.corkcity.ie/en/council-services/services/planning/planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.corkcity.ie/en/council-services/services/planning/planning-application-process/make-a-planning-application/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides dedicated landing pages for searching applications (including a new Citizens Portal), viewing weekly lists by year, and a comprehensive \"Make a Planning Application\" guidance page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "cork-cc",
+      "name": "Cork County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.corkcoco.ie/en",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.agileapplications.ie/corkcoco",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.corkcoco.ie/en/resident/planning-and-development/planning-weekly-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.corkcoco.ie/en/resident/planning-and-development/making-a-planning-application-choosing-your-application-form",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "The official council website provides a dedicated section for weekly planning lists in PDF format and links to an Agile Applications portal for public record searches.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "donegal-cc",
+      "name": "Donegal County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.donegalcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=6",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.donegalcoco.ie/en/services/planning/development-management/publications-notifications-and-planning-registers/weekly-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.donegalcoco.ie/en/services/planning/development-management/apply-for-it/apply-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to a dedicated e-planning search portal and maintains a regularly updated weekly lists page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "dublin-city-council",
+      "name": "Dublin City Council",
+      "kind": "city_council",
+      "official_homepage": "https://www.dublincity.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.dublincity.ie/planning-and-land-use/find-planning-application/view-or-search-planning-applications",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.dublincity.ie/planning-and-land-use/find-planning-application/weeks-planning-applications-and-decisions",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.dublincity.ie/planning-and-land-use/make-planning-application/about-planning-application-process",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning pages were verified for search, weekly lists organized by electoral area, and application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "d-n-laoghaire-rathdown-cc",
+      "name": "D\u00fan Laoghaire-Rathdown County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.dlrcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.agileapplications.ie/dunlaoghaire",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.dlrcoco.ie/weekly-planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.dlrcoco.ie/planning-applications/planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section links to a dedicated search portal and a weekly list page; guidance URL confirmed.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "fingal-cc",
+      "name": "Fingal County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.fingal.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.agileapplications.ie/fingal",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.fingal.ie/council/service/planning-weekly-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.fingal.ie/council/service/planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the Agile Applications search portal, weekly lists, and comprehensive application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "galway-city-council",
+      "name": "Galway City Council",
+      "kind": "city_council",
+      "official_homepage": "https://www.galwaycity.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/GalwayCity/SearchTypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.galwaycity.ie/services/planning/planning-services/planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.galwaycity.ie/services/planning-and-building/planning-application-process",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to a dedicated ePlan portal for searches and a dedicated list page for weekly updates.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "galway-cc",
+      "name": "Galway County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.galway.ie/en",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=11",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.galway.ie/en/planning-building/development-management/weekly-planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.galway.ie/en/planning-building/development-management/planning-applications/apply-for-it/how-apply-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to ePlanning for searches, a PowerBI report for weekly lists, and detailed guidance pages; all URLs confirmed.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "kerry-cc",
+      "name": "Kerry County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.kerrycoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "http://www.eplanning.ie/KerryCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.kerrycoco.ie/planning/development-management/planning-applications/weekly-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.kerrycoco.ie/planning/development-management/planning-applications/planning-application-process/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the ePlanning search portal, a dedicated weekly lists page with PDF reports, and comprehensive application process guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "kildare-cc",
+      "name": "Kildare County Council",
+      "kind": "county_council",
+      "official_homepage": "https://kildarecoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://webgeo.kildarecoco.ie/planningenquiry",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://kildarecoco.ie/AllServices/Planning/PlanningWeeklyLists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://kildarecoco.ie/AllServices/Planning/PlanningApplicationsandPermission/MakingaPlanningApplication/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to a dedicated web-GIS search system, weekly lists, and comprehensive application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "kilkenny-cc",
+      "name": "Kilkenny County Council",
+      "kind": "county_council",
+      "official_homepage": "https://kilkennycoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.kilkennycoco.ie/searchexact",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://kilkennycoco.ie/eng/services/planning/planning-applications/planning_lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://kilkennycoco.ie/eng/services/planning/planning-applications/applying-for-planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official Kilkenny County Council website's planning section provides direct links to an ePlan search portal, a dedicated weekly lists archive, and comprehensive application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "laois-cc",
+      "name": "Laois County Council",
+      "kind": "county_council",
+      "official_homepage": "https://laois.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=15",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://laois.ie/planning-notices",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://laois.ie/planning-and-building/development-management/applying-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to a dedicated planning notices section for weekly lists and a guidance section for applications.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "leitrim-cc",
+      "name": "Leitrim County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.leitrim.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.leitrim.ie/Council/Services/Planning-Building/Planning-Permission/Online-Planning-Search/",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.leitrim.ie/council/services/planning-building/planning-permission/weekly-planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.leitrim.ie/Council/Services/Planning-Building/Planning-Permission/Applying-for-Planning-Permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning pages link to a dedicated ePlan search portal and maintain a weekly planning list archive.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "limerick-city-and-cc",
+      "name": "Limerick City and County Council",
+      "kind": "city_and_county_council",
+      "official_homepage": "https://www.limerick.ie/council",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.limerick.ie/council/services/planning-and-placemaking/search-for-a-planning-application/search-for-a-planning",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.limerick.ie/council/services/planning-and-placemaking/search-for-a-planning-application/weekly-planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.limerick.ie/council/services/planning-and-placemaking/apply-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning sections for search, weekly lists, and guidance were verified on the limerick.ie domain.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "longford-cc",
+      "name": "Longford County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.longfordcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=18",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.longfordcoco.ie/services/planning/weekly-planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.longfordcoco.ie/services/planning/planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the ePlanning search portal, a weekly list hub, and a comprehensive planning permission guidance page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "louth-cc",
+      "name": "Louth County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.louthcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=19",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.louthcoco.ie/en/services/planning/planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.louthcoco.ie/en/services/planning/online-planning-and-maps/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to both an ePlan search portal and a dedicated weekly list section; all URLs confirmed.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "mayo-cc",
+      "name": "Mayo County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.mayo.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/mayocc/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.eplanning.ie/mayocc/SearchListing/RECEIVED",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.mayo.ie/planning/apply",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning pages verified; search and weekly lists are hosted on the eplanning.ie portal for Mayo.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "meath-cc",
+      "name": "Meath County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.meath.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.meath.ie/council/council-services/planning-and-building/planning-permission/view-or-search-planning-applications",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.meath.ie/council/council-services/planning-and-building/planning-permission/view-or-search-planning-applications/weekly-planning-permissions-list",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.meath.ie/council/council-services/planning-and-building/planning-permission/apply-for-planning-permission/how-to-apply-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning pages were verified to link directly to the ePlanning search portal and maintain structured weekly list archives by year.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "monaghan-cc",
+      "name": "Monaghan County Council",
+      "kind": "county_council",
+      "official_homepage": "https://monaghan.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://eplanning.ie/eplan/searchtypes?localAuthorityId=22",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://monaghan.ie/planning/weekly-planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://monaghan.ie/planning/apply-for-planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to a dedicated ePlanning search portal and hosts weekly lists directly on its domain.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "offaly-cc",
+      "name": "Offaly County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.offaly.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "http://www.eplanning.ie/OffalyCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.offaly.ie/c/weekly-planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.offaly.ie/planning-applications-pack/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to an ePlan search portal and a dedicated weekly list archive categorized by year.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "roscommon-cc",
+      "name": "Roscommon County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.roscommoncoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/RoscommonCC/searchexact",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.roscommoncoco.ie/en/services/planning/search-planning-applications/planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.roscommoncoco.ie/en/services/planning/search-planning-applications/making-a-planning-application/guidance/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the ePlanning search portal, yearly archives of weekly planning lists, and a dedicated guidance page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "sligo-cc",
+      "name": "Sligo County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.sligococo.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "http://www.eplanning.ie/SligoCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.sligococo.ie/planning/SearchPlanningApplications/WeeklyPlanningLists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.sligococo.ie/planning/ApplyforPlanningPermission/ApplyforPlanning/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to an ePlanning search portal and a dedicated weekly list directory categorized by year.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "south-dublin-cc",
+      "name": "South Dublin County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.sdcc.ie/en/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.agileapplications.ie/southdublin/search-applications/",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://planning.southdublin.ie/Home/WeeklyLists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.sdcc.ie/en/services/planning-building-control/planning-applications/make-a-planning-application/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page links to a dedicated weekly-list section and an external planning portal; all URLs confirmed active as of September 2026.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "tipperary-cc",
+      "name": "Tipperary County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.tipperarycoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/TipperaryCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.tipperarycoco.ie/planning-and-building/planning-information-and-advice/planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.tipperarycoco.ie/planning-and-building/planning-permission/step-by-step/applying-planning-permission-overview",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to an ePlan search system and a dedicated weekly lists page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "waterford-city-and-cc",
+      "name": "Waterford City and County Council",
+      "kind": "city_and_county_council",
+      "official_homepage": "https://waterfordcouncil.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://waterfordcouncil.ie/services/planning/online-planning-enquiries/",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://waterfordcouncil.ie/documents/planning-lists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://waterfordcouncil.ie/services/planning/planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the online search portal, weekly lists by year, and application guidance.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "westmeath-cc",
+      "name": "Westmeath County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.westmeathcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.eplanning.ie/WestmeathCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.westmeathcoco.ie/en/ourservices/planning/planningapplications/viewweeklylists/",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.westmeathcoco.ie/en/ourservices/planning/planningapplications/makeaplanningapplication/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council website provides direct links to an ePlan search portal, a dedicated weekly lists section, and a comprehensive guidance page for applications.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "wexford-cc",
+      "name": "Wexford County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.wexfordcoco.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "https://www.wexfordcoco.ie/planning/search-planning-applications",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.wexfordcoco.ie/planning/planning-applications/planning-lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.wexfordcoco.ie/planning/planning-applications/apply-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning section provides direct links to the Agile Applications search portal, weekly lists categorized by year, and a comprehensive guidance page.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "wicklow-cc",
+      "name": "Wicklow County Council",
+      "kind": "county_council",
+      "official_homepage": "https://www.wicklow.ie/",
+      "sources": {
+        "planning_search": {
+          "url": "http://www.eplanning.ie/WicklowCC/searchtypes",
+          "capability": "application_record_search",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "weekly_lists": {
+          "url": "https://www.wicklow.ie/Living/Services/Planning/Planning-Applications/Weekly-Planning-Lists",
+          "capability": "published_weekly_list_index",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.wicklow.ie/Living/Services/Planning/Planning-Applications/Apply-for-Planning",
+          "capability": "application_guidance_retrieval",
+          "coverage": "authority-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council planning page provides direct links to an ePlanning search portal and a dedicated section for weekly lists organized by year.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction",
+      "jurisdiction": "Republic of Ireland"
+    },
+    {
+      "id": "ni-antrim-and-newtownabbey-borough-council",
+      "name": "Antrim and Newtownabbey Borough Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://antrimandnewtownabbey.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://antrimandnewtownabbey.gov.uk/residents/planning/planning-applications/weekly-applications/",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://antrimandnewtownabbey.gov.uk/residents/planning/your-home-and-planning-information/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI-wide planning portal for searches and maintains its own archive of weekly application lists.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-ards-and-north-down-borough-council",
+      "name": "Ards and North Down Borough Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.ardsandnorthdown.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.ardsandnorthdown.gov.uk/article/1472/Planning-applications-recently-advertised",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.ardsandnorthdown.gov.uk/article/1475/Planning-Permission-How-to-submit",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI Planning Portal for searches and provides a page for recently advertised weekly planning lists in PDF format.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-armagh-city-banbridge-and-craigavon-borough-council",
+      "name": "Armagh City, Banbridge and Craigavon Borough Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.armaghbanbridgecraigavon.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.armaghbanbridgecraigavon.gov.uk/resident/planning-applications-residents/applications-currently-open-comment/",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.armaghbanbridgecraigavon.gov.uk/resident/building-control-applications-residents/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site provides weekly PDF lists of applications and links to the NI Planning Portal for live searches.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-belfast-city-council",
+      "name": "Belfast City Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.belfastcity.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.belfastcity.gov.uk/planningcommittee",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.belfastcity.gov.uk/applyforplanning",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI Planning Portal for searches and provides its own weekly lists of advertised applications.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-causeway-coast-and-glens-borough-council",
+      "name": "Causeway Coast and Glens Borough Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.causewaycoastandglens.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://causewaycoastandglens.gov.uk/live/planning/schedule-of-applications/application-received",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://causewaycoastandglens.gov.uk/live/planning/development-management/applying-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site provides weekly lists of valid applications and directs users to the NI Planning Portal for live searches.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-derry-city-and-strabane-district-council",
+      "name": "Derry City and Strabane District Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.derrystrabane.com/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.derrystrabane.com/services/planning/planning-applications",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.derrystrabane.com/services/planning/planning-portal",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI Planning Portal for search and maintains a dedicated page for weekly advertised and validated planning application lists.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-fermanagh-and-omagh-district-council",
+      "name": "Fermanagh and Omagh District Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.fermanaghomagh.com/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.fermanaghomagh.com/services/planning/planning-applications/",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.fermanaghomagh.com/services/planning/planning-guides/applying-for-planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI Planning Portal for search and provides a live register of applications open for comment on its own site.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-lisburn-and-castlereagh-city-council",
+      "name": "Lisburn and Castlereagh City Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.lisburncastlereagh.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.lisburncastlereagh.gov.uk/w/planning-application-lists",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.lisburncastlereagh.gov.uk/w/submit-an-application",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "The council website hosts weekly PDF lists of applications and directs users to the NI Planning Portal for public register searches.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-mid-and-east-antrim-borough-council",
+      "name": "Mid and East Antrim Borough Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.midandeastantrim.gov.uk/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.midandeastantrim.gov.uk/resident/planning-building-control/planning/planning-weekly-publications/",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.midandeastantrim.gov.uk/resident/planning-building-control/planning/planning-permission/",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk/",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "The official council website links to the NI Planning Portal for searches and applications, while maintaining its own dedicated weekly planning publication lists.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-mid-ulster-district-council",
+      "name": "Mid Ulster District Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.midulstercouncil.org/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planning.midulstercouncil.org/online-applications/",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.midulstercouncil.org/planning/applications-received",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.midulstercouncil.org/planning/apply-for-planning-permission",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": null
+      },
+      "verification_note": "Official council site links to its own independent Public Access portal and a weekly list page; it does not use the shared NI Planning Portal.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    },
+    {
+      "id": "ni-newry-mourne-and-down-district-council",
+      "name": "Newry, Mourne and Down District Council",
+      "kind": "local_government_district",
+      "jurisdiction": "Northern Ireland",
+      "official_homepage": "https://www.newrymournedown.org/",
+      "sources": {
+        "planning_search": {
+          "url": "https://planningregister.planningsystemni.gov.uk/simple-search",
+          "capability": "application_record_search",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "planning_lists": {
+          "url": "https://www.newrymournedown.org/new-applications",
+          "capability": "published_planning_list_or_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "manual_index_scan_candidate",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "application_guidance": {
+          "url": "https://www.newrymournedown.org/planning-guides",
+          "capability": "application_guidance_retrieval",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        },
+        "ni_planning_portal": {
+          "url": "https://planningregister.planningsystemni.gov.uk",
+          "capability": "national_planning_register",
+          "coverage": "council-wide public source link",
+          "retrieval_mode": "on_demand_link_or_evidence_retrieval",
+          "retrieval_status": "not_checked_in_current_session",
+          "review_status": "official_link_verified",
+          "terms_review_status": "operator_review_required_before_high_volume_monitoring",
+          "reviewed_on": "2026-09-04"
+        }
+      },
+      "verification_note": "Official council site links to the NI Planning Portal for search and provides weekly lists of new applications via a document archive.",
+      "registry_status": "directory_verified",
+      "last_reviewed": "2026-09-04",
+      "requirements_pack_status": "source_link_only_requires_document_level_extraction"
+    }
+  ],
+  "jurisdictions": {
+    "Republic of Ireland": {
+      "authority_count": 31,
+      "boundary_status": "live_consent_led_point_lookup",
+      "boundary_source": {
+        "title": "Tailte \u00c9ireann Local Authorities National Statutory Boundaries Ungeneralised 2026",
+        "dataset_url": "https://data-osi.opendata.arcgis.com/datasets/osi::local-authorities-national-statutory-boundaries-ungeneralised-2026",
+        "service_url": "https://services-eu1.arcgis.com/FH5XCsx8rYXqnjF5/arcgis/rest/services/National_Statutory_Boundaries_-_Local_Authorities__Ungeneralised_-_2026/FeatureServer/3",
+        "license": "CC BY 4.0"
+      }
+    },
+    "Northern Ireland": {
+      "authority_count": 11,
+      "boundary_status": "manual_confirmation_required_pending_reviewed_local_snapshot",
+      "boundary_source": {
+        "title": "OSNI Large-scale Boundaries Local Government Districts (2012)",
+        "catalogue_url": "https://www.data.gov.uk/dataset/8c954c51-9310-4cb5-b528-f8735fc16b0c/osni-open-data-largescale-boundaries-local-government-districts-20126",
+        "geojson_url": "https://osni-spatialni.opendata.arcgis.com/datasets/eaa08860c50045deb8c4fdc7fa3dac87_2.geojson?outSR=%7B%22latestWkid%22%3A29902%2C%22wkid%22%3A29900%7D",
+        "service_url": "https://services.spatialni.gov.uk/opendata/rest/services/OSNIVector/OSNIOpenData_LargescaleBoundaries/MapServer/2",
+        "license": "Open Government Licence v3.0"
+      }
+    }
+  }
+}

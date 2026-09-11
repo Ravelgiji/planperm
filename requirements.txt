@@ -1,5 +1,15 @@
 streamlit==1.45.1
-pandas==2.2.3
-pydeck==0.9.1
+streamlit-folium==0.24.0
+folium==0.19.5
 requests==2.32.3
-openai==1.82.0
+beautifulsoup4>=4.12,<5.0
+pypdf>=5.0,<6.0
+# Preserves column layout when reading weekly-list PDFs, which are tables.
+# pypdf is used as a fallback, so this is strongly preferred but not fatal.
+pdfplumber>=0.11,<1.0
+langgraph>=0.2
+langchain-core>=0.3
+langchain-openai>=0.2
+
+# Optional: enables LLM-backed responses (agents fall back to deterministic output without it)
+# openai>=1.82,<2.0

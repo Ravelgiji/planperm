@@ -1,0 +1,59 @@
+# PlanPerm Data-Connected Workspace Checklist
+
+- [x] Review the original Streamlit data interfaces and define a frontend-compatible response contract.
+- [x] Upgrade the project with secure file storage and backend support.
+- [x] Refresh the planning context, metrics, and nearby application markers every time the site pin changes.
+- [x] Move the PlanPerm assistant into the map-side workspace and capture uploaded property files as visible context.
+- [x] Verify a repeated pin refresh and document how the Streamlit services connect to the UI.
+- [x] Open a planning-application detail window when a nearby map marker is selected.
+- [x] Include the original application-source link and key planning details in the popup.
+- [x] Replace property-context controls with a conventional PlanPerm chat interface prepared for future AI integration.
+- [x] Verify marker click, source navigation, chat layout, and responsive behaviour.
+- [x] Replace the React workspace with a local-runnable Streamlit application while retaining the existing planning workflow.
+- [x] Simplify the product copy and reduce the interface to the core map, evidence, application detail, and chat-placeholder functions.
+- [x] Place compact search and radius controls in a left-hand panel alongside the map.
+- [x] Preserve pin-based nearby application refreshes, application detail/source links, and the normal chat-window placeholder.
+- [x] Verify the Streamlit application locally and document the streamlined run instructions.
+- [x] Document expected browser-disconnect behavior and verify the API-free Streamlit map startup path.
+- [x] Refine the Streamlit visual system with clearer hierarchy, richer surfaces, and a more professional map workspace.
+- [x] Add an explicit pin-placement mode with visible status and a lightweight confirmation before refreshing planning evidence.
+- [x] Reduce visual disruption during site changes by keeping the selected pin and map context stable while new evidence loads.
+- [x] Verify the polished desktop and mobile layouts along with the complete pin-placement workflow.
+- [x] Diagnose the externally hosted Streamlit blank-page behaviour and prepare the corrected websocket-safe runtime configuration.
+- [x] Remove the added pin-mode and confirmation steps so one map click directly moves the site pin and refreshes evidence.
+- [x] Verify the public domain and direct pin interaction without relying on the development preview.
+- [x] Establish a more distinctive professional visual direction for the Streamlit workspace.
+- [x] Add restrained planning and property imagery that supports the workspace without distracting from map analysis.
+- [x] Add a persistent light and dark theme switch with full surface, text, control, and map framing treatment.
+- [x] Verify visual hierarchy and both themes on desktop and mobile.
+- [x] Move applications, approval rate, and refused metrics into the terrain hero card.
+- [x] Remove the redundant nearby-applications list beneath the map.
+- [x] Redesign map-point planning details as a better structured popup card.
+- [x] Rename the dark-mode control contextually and correct dark-theme contrast across text and controls.
+- [x] Verify the streamlined interface in light and dark modes on desktop and mobile.
+- [x] Remove the oversized landing headline and reclaim hero space for core planning evidence.
+- [x] Set Galway as the default selected site and initial map landing point.
+- [x] Verify the compact layout and live nearby-application lookup for Galway.
+- [x] Replace the awkward top row with a polished compact masthead and integrated theme control.
+- [x] Remove the large enclosing workspace-card treatment in favor of open section spacing and individual surfaces.
+- [x] Refine controls, map frame, assistant panel, and responsive spacing as one cohesive professional composition.
+- [x] Verify the open layout in light and dark modes on desktop and mobile.
+- [x] Create a dedicated professional PlanPerm assistant card with clear chat hierarchy and composer treatment.
+- [x] Compact the header light-dark control while keeping its state clear and accessible.
+- [x] Remove the divider beneath the Galway selected-site and radius line.
+- [x] Verify the assistant card, light-dark control, and cleaner map header on desktop and mobile.
+- [x] Remove Eircode-specific lookup from the search experience and retain town-address lookup.
+- [x] Size the PlanPerm assistant card to the map and provide an independently scrollable conversation area.
+- [x] Correct dark-mode typed text and placeholder contrast in the assistant composer.
+- [x] Verify town-address search, long conversation scrolling, and light-dark chat legibility.
+- [x] Remove the light artifact from the dark-mode assistant composer surface.
+- [x] Verify consistent dark composer styling on desktop and mobile.
+- [x] Replace the current embedded map interaction with a less error-prone site-selection model.
+- [x] Separate normal map navigation from deliberate site selection so clicks do not unexpectedly zoom or fail to place a pin.
+- [x] Preserve nearby-application markers, detail popups, and fresh planning-data lookup after selecting a site.
+- [x] Verify navigation, selection, and data refresh in the replacement map experience.
+- [ ] Confirm access to the target GitHub repository and inspect the existing `UI` branch state.
+- [ ] Prepare the current Streamlit UI implementation for the target repository structure.
+- [ ] Push the prepared UI implementation to a new `UI` branch and confirm the remote commit.
+- [ ] Create an accessible fork of `Ravelgiji/planperm` under the connected GitHub account.
+- [ ] Push the current Streamlit UI to the fork’s `UI` branch and confirm the remote branch link.

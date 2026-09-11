@@ -1,0 +1,24 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 940, "title": "Workspace — refined" },
+    { "file": "Marks.dc.html", "x": 1560, "y": 0, "w": 1100, "h": 760, "title": "Logo directions" },
+    { "file": "Foundations.dc.html", "x": 1560, "y": 880, "w": 1100, "h": 1060, "title": "Type & colour" }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -150,
+      "w": 420,
+      "text": "PlanPerm visual refresh\n\nMatched to the live app: DM Sans, #0f766e green, #12383c ink, 17px metric radii, 10px buttons, 1.15/3.25/1.35 columns.\n\nThree changes proposed:\n1. Replace Fraunces with Newsreader\n2. Type-led hero, drop the stock photo\n3. Deadline urgency gets its own colour scale"
+    },
+    {
+      "id": "marks-note",
+      "x": 1560,
+      "y": -150,
+      "w": 380,
+      "text": "Four marks, each trading on something the product does. Recommendation is Option B — it survives 16px and means \"this area is under watch\"."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

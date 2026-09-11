@@ -1,293 +1,500 @@
-"""PlanPerm — Planning Permission Intelligence Agent."""
+"""PlanPerm — concise Streamlit planning-evidence workspace."""
 
+from __future__ import annotations
+
+import html
+import tempfile
+from typing import Any
+
+import folium
 import streamlit as st
-import pandas as pd
-import pydeck as pdk
+from folium.plugins import Draw
+from streamlit_folium import st_folium
 
-from planning_api import query_cached
+from agents.graph import run as run_planning_graph
+from core.env import load_env
 from geocoder import resolve_location
-from analysis import (
-    compute_stats,
-    format_stats_text,
-    compute_timeline_stats,
-    compute_appeal_stats,
-)
-from agent import run_agent
-from config import LLM_API_KEY, DEFAULT_RADIUS_KM, MIN_RADIUS_KM, MAX_RADIUS_KM
+from planning_data import area_total, fetch_nearby_applications, summarize_applications
+from views.records import render_records
+from views.watch import render_watch_control, render_watch_results
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# The orchestrator and the agents read OPENAI_API_KEY straight from the
+# environment, and nothing was reading the .env file LOCAL_SETUP.md tells you
+# to create - so the key never arrived and semantic routing silently degraded
+# to the rule-based fallback. Load it before any agent import is used.
+load_env()
 
-st.set_page_config(page_title="PlanPerm", page_icon="📍", layout="wide")
 
-# ── Custom CSS ───────────────────────────────────────────────────────────────
+DEFAULT_SITE = {"lat": 53.2707, "lon": -9.0568, "label": "Galway, Ireland"}
+RADIUS_OPTIONS = [0.5, 1.0, 2.0, 3.0, 5.0]
+# Markers drawn on the map. The stats use every record; plotting several
+# thousand pins would make pan and zoom unusable, so the map shows the
+# nearest few and the site line says so.
+MAP_MARKER_LIMIT = 150
+HERO_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663940374058/eqTMQcrXTmJCYOhP.jpg"
+DECISION_COLORS = {
+    "GRANTED": "#0f766e",
+    "REFUSED": "#b45309",
+    "PENDING": "#b7791f",
+    "WITHDRAWN": "#64748b",
+}
 
-st.markdown("""
-<style>
-    .disclaimer-bar {
-        background-color: #fef2f2;
-        border: 1px solid #ef4444;
-        border-radius: 6px;
-        padding: 8px 12px;
-        color: #991b1b;
-        font-size: 0.85em;
-        font-weight: 500;
-        text-align: center;
-        margin-top: 8px;
-    }
-    .detail-card {
-        background-color: #1e293b;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 12px;
-    }
-    .stat-metric {
-        text-align: center;
-        padding: 8px;
-    }
-    .stat-metric .value {
-        font-size: 1.8em;
-        font-weight: 700;
-    }
-    .stat-metric .label {
-        font-size: 0.8em;
-        opacity: 0.7;
-    }
-</style>
-""", unsafe_allow_html=True)
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="PlanPerm", page_icon="✦", layout="wide", initial_sidebar_state="collapsed")
 
-st.sidebar.title("📍 PlanPerm")
-st.sidebar.caption("Planning Permission Intelligence Agent")
 
-location_input = st.sidebar.text_input(
-    "Enter a location",
-    placeholder="e.g. Rathmines, Athlone, Cork",
-)
+def apply_theme(dark_mode: bool) -> None:
+    mode = """
+      :root { --ink:#e8f0ec; --paper:#0d1619; --surface:#142124; --surface-2:#19292d; --composer:#102024; --line:#294047; --green:#33b7a8; --green-deep:#167d73; --muted:#a0b1ae; --soft:#203338; --shadow:#02080977; --urgent:#e08a3c; --urgent-tint:#2a1f16; --urgent-edge:#4d3520; --closing:#d3a04a; --closing-tint:#262017; --closing-edge:#4a3d22; --settled:#94a3b8; --settled-tint:#1b2327; --settled-edge:#33414a; }
+      .stApp { background: radial-gradient(circle at 85% 2%, #1c484344, transparent 26rem), linear-gradient(145deg, #0c1417, #101d20); }
+      .planperm-hero { background-image: linear-gradient(90deg, #0f1c1fe8 0%, #0f1c1fc7 38%, #0f1c1f1a 74%, #0f1c1f36), url('""" + HERO_IMAGE + """'); }
+      [data-testid="stMetric"] { background: linear-gradient(145deg, #19282b, #122024); }
+      [data-testid="stExpander"] { background: var(--surface); }
+      .site-line { border-color:#28514d; color:#c7ded7; }
+      .map-frame iframe { filter: brightness(.78) saturate(.8); }
+      [data-testid="stChatMessage"] { background:#18282a; border-color:#2a4545; }
+          [data-testid="stTextInput"] input, [data-testid="stChatInput"], [data-testid="stChatInput"] textarea { background:#102024 !important; color:var(--ink) !important; }
+      .hero-stat { background:#112629c7; border-color:#38645f; }
+    """ if dark_mode else """
+      :root { --ink:#12383c; --paper:#f5f4ee; --surface:#fffefb; --surface-2:#f0f5ef; --composer:#fffefb; --line:#dce1da; --green:#0f766e; --green-deep:#0b5c56; --muted:#69746f; --soft:#edf4f0; --shadow:#173c3110; --urgent:#b45309; --urgent-tint:#fdefe4; --urgent-edge:#f0d3bb; --closing:#b7791f; --closing-tint:#fdf6e9; --closing-edge:#ecdcb8; --settled:#64748b; --settled-tint:#f3f3f1; --settled-edge:#dcdedb; }
+      .stApp { background: radial-gradient(circle at 82% 4%, #dcebe155, transparent 23rem), var(--paper); }
+      .planperm-hero { background-image: linear-gradient(90deg, #f7f4ecf5 0%, #f7f4ecdf 38%, #f7f4ec3d 71%, #f7f4ec00), url('""" + HERO_IMAGE + """'); }
+      [data-testid="stMetric"] { background: linear-gradient(145deg, #fffefc, #f7f8f3); }
+      .site-line { border-color:#dce9df; color:#31534c; }
+      [data-testid="stChatMessage"] { background:#f8fbf8; border-color:#e3e8e1; }
+      .hero-stat { background:#fffefbd9; border-color:#e4e9e1; }
+    """
+    st.markdown(
+        """
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap');
+          """ + mode + """
+          .stApp, .stApp * { font-family: 'DM Sans', sans-serif; }
+          /* The rule above uses `*`, which also captures Streamlit's Material
+             icon spans — an icon font renders its ligature name as literal
+             text, so expander chevrons showed up as "keyboard_arrow_right".
+             Hand the icon font back to anything that needs it. */
+          [data-testid="stIconMaterial"], span.material-symbols-rounded,
+          span.material-symbols-outlined, .stApp [class*="material-symbols"] {
+            font-family: 'Material Symbols Rounded', 'Material Symbols Outlined' !important;
+          }
+          .stApp, .stApp p, .stApp label, .stApp [data-testid="stMarkdownContainer"], .stApp [data-testid="stCaptionContainer"], .stApp [data-testid="stWidgetLabel"] p { color:var(--ink); }
+          .stApp [data-testid="stCaptionContainer"], .stApp [data-testid="stWidgetLabel"] p { color:var(--muted) !important; }
+          .stApp [data-testid="stTextInput"] input::placeholder, .stApp textarea::placeholder { color:var(--muted) !important; opacity:.9; }
+          .stApp [data-testid="stTextInput"] input, .stApp textarea, .stApp [data-testid="stChatInput"] textarea { -webkit-text-fill-color:var(--ink) !important; caret-color:var(--ink) !important; color:var(--ink) !important; }
+          .stApp [data-testid="stToggle"] label, .stApp [data-testid="stToggle"] label p { color:var(--ink) !important; font-weight:650; }
+          [data-testid="stHeader"], [data-testid="stToolbar"], #MainMenu, footer { visibility: hidden; height: 0; }
+          .block-container { max-width: 1510px; padding: 1.2rem 2.5rem 3.5rem; }
+          [data-testid="stHorizontalBlock"] { gap: 1.15rem; }
+          h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
+          [data-testid="stMetric"] { border: 1px solid var(--line); border-radius: 17px; box-shadow: 0 1px 1px var(--shadow), 0 11px 30px var(--shadow); min-height: 100px; padding: 1rem 1.1rem; }
+          [data-testid="stMetricLabel"] { color: var(--muted); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+          [data-testid="stMetricValue"] { color: var(--ink); font-family: 'Newsreader', Georgia, serif; font-variant-numeric: tabular-nums; font-weight: 500; }
+          [data-testid="stVerticalBlockBorderWrapper"] { background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; padding:0 !important; }
+          .masthead { align-items:center; display:flex; justify-content:space-between; margin-bottom:.35rem; padding:.15rem 0 .45rem; }
+          .brand-lockup { align-items:center; color:var(--ink); display:flex; font-size:1rem; font-weight:700; gap:.55rem; letter-spacing:-.03em; }
+          .brand-mark { align-items:center; display:inline-flex; height:1.25rem; width:1.25rem; }
+          .brand-mark svg { display:block; height:100%; width:100%; }
+          .brand-lockup .brand-mark { color:var(--green); }
+          .brand-detail { color:var(--muted); font-size:.68rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+          .theme-label { color:var(--muted); font-size:.68rem; font-weight:700; letter-spacing:.07em; margin-right:.18rem; text-align:right; text-transform:uppercase; }
+          .planperm-hero { background-position:center right; background-repeat:no-repeat; background-size:cover; border:1px solid var(--line); border-radius:20px; box-shadow:0 14px 38px var(--shadow); margin:0 0 1.15rem; min-height:134px; overflow:hidden; padding:1.05rem 1.35rem; }
+          .planperm-hero .eyebrow { color:var(--green); font-size:.67rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+          .planperm-hero p { color:var(--muted) !important; font-size:.88rem; line-height:1.45; margin:.3rem 0 0; max-width:460px; }
+          .hero-metrics { display:flex; gap:.55rem; margin-top:.75rem; max-width:540px; }
+          .hero-stat { backdrop-filter:blur(10px); border:1px solid; border-radius:11px; min-width:0; padding:.5rem .7rem; flex:1; }
+          .hero-stat span { color:var(--muted); display:block; font-size:.59rem; font-weight:750; letter-spacing:.08em; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+          .hero-stat strong { color:var(--ink); display:block; font-family:'Newsreader', Georgia, serif; font-size:1.46rem; font-variant-numeric:tabular-nums; font-weight:500; line-height:1.1; margin-top:.12rem; }
+          .planperm-kicker { color:var(--green); font-size:.67rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+          .planperm-note, .map-note { color:var(--muted); font-size:.78rem; line-height:1.45; }
+          .map-note { margin:.35rem 0 0; }
+          .site-line { align-items:center; border:0 !important; border-bottom:0 !important; border-radius:0; box-shadow:none !important; display:flex; font-size:.76rem; gap:.45rem; margin:0 0 .5rem; outline:0 !important; padding:.18rem 0; }
+          .site-line .dot { background:var(--green); border-radius:50%; box-shadow:0 0 0 3px #0f766e22; height:.45rem; width:.45rem; }
+          .map-frame { border:0; border-radius:14px; box-shadow:0 8px 24px var(--shadow); overflow:hidden; }
+          .map-frame iframe { border:0 !important; display:block; transition:filter 180ms ease; }
+          [data-testid="stChatMessage"] { border:1px solid; border-radius:12px; padding:.45rem .55rem; }
+          .st-key-assistant_card { background:linear-gradient(160deg, var(--surface), var(--surface-2)); border:1px solid var(--line); border-radius:16px; box-shadow:0 10px 28px var(--shadow); box-sizing:border-box; height:570px; overflow:hidden; padding:1rem; }
+          .st-key-assistant_card > [data-testid="stVerticalBlock"] { display:flex; flex-direction:column; height:100%; }
+          .assistant-header { align-items:center; display:flex; gap:.65rem; margin-bottom:.72rem; }
+          .assistant-glyph { align-items:center; background:var(--green); border-radius:9px; box-shadow:0 4px 10px #0f766e30; color:#fff; display:flex; font-size:.9rem; font-weight:800; height:2rem; justify-content:center; width:2rem; }
+          .assistant-title { color:var(--ink); font-size:.88rem; font-weight:750; letter-spacing:-.015em; }
+          .assistant-subtitle { color:var(--muted); font-size:.7rem; margin-top:.04rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+          .assistant-ready { align-items:center; color:var(--muted); display:flex; font-size:.68rem; gap:.35rem; margin:0 0 .8rem; }
+          .assistant-ready:before { background:var(--green); border-radius:50%; content:''; display:inline-block; height:.38rem; width:.38rem; }
+          .assistant-welcome { background:var(--soft); border:1px solid var(--line); border-radius:11px; color:var(--ink); font-size:.78rem; line-height:1.48; margin:.15rem 0 .85rem; padding:.7rem .75rem; }
+          .st-key-assistant_history { flex:1 1 auto; min-height:0; overflow-y:auto; padding-right:.2rem; }
+          .st-key-assistant_history::-webkit-scrollbar { width:7px; }
+          .st-key-assistant_history::-webkit-scrollbar-thumb { background:var(--line); border-radius:999px; }
+          .st-key-assistant_card [data-testid="stChatInput"] { flex:0 0 auto; }
+          .st-key-assistant_card [data-testid="stChatInput"], .st-key-assistant_card [data-testid="stChatInput"] div, .st-key-assistant_card [data-testid="stChatInput"] textarea { background:var(--composer) !important; border-color:var(--line) !important; }
+          .st-key-assistant_card [data-testid="stChatInput"] button { background:transparent !important; }
+          .st-key-assistant_card [data-testid="stChatInput"] { margin-top:.35rem; }
+          .section-rule { background:var(--line); height:1px; margin:1rem 0; width:100%; }
+          .deadline { align-items:baseline; border-radius:9px; display:flex; flex-wrap:wrap; font-size:.82rem; gap:.4rem; margin:.35rem 0 0; padding:.42rem .6rem; }
+          .deadline .when { font-family:'Newsreader', Georgia, serif; font-size:.95rem; font-variant-numeric:tabular-nums; font-weight:500; }
+          .deadline-open { background:var(--soft); border:1px solid var(--line); border-left:3px solid var(--green); color:var(--green); }
+          .deadline-closing { background:var(--closing-tint); border:1px solid var(--closing-edge); border-left:3px solid var(--closing); color:var(--closing); }
+          .deadline-urgent { background:var(--urgent-tint); border:1px solid var(--urgent-edge); border-left:3px solid var(--urgent); color:var(--urgent); }
+          .deadline-closed { background:var(--settled-tint); border:1px solid var(--settled-edge); border-left:3px solid var(--settled); color:var(--settled); }
+          .estimate-badge { align-items:center; background:var(--settled-tint); border:1px solid var(--settled-edge); border-radius:6px; color:var(--settled); display:inline-flex; font-size:.6rem; font-weight:700; gap:.25rem; letter-spacing:.03em; padding:.1rem .35rem; text-transform:uppercase; vertical-align:middle; }
+          [data-testid="stChatInput"] { border-color:var(--line); border-radius:11px; }
+          .stButton > button, [data-testid="stFormSubmitButton"] > button { border-color:var(--line); border-radius:10px; color:var(--ink); font-weight:650; transition:transform 140ms ease, box-shadow 140ms ease; }
+          .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover { box-shadow:0 5px 12px var(--shadow); transform:translateY(-1px); }
+          .stButton > button:active, [data-testid="stFormSubmitButton"] > button:active { transform:scale(.98); }
+          /* Primary buttons. The label lives inside a stMarkdownContainer, and
+             the global rule above paints that element var(--ink) — which beat
+             this rule's `color` and left dark text on dark teal. Re-assert the
+             colour on the inner element, and cover the newer stBaseButton
+             testids as well as the older kind="primary" attribute. */
+          .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button[kind="primary"],
+          [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {
+            background:var(--green-deep) !important; border-color:var(--green-deep) !important; color:#fff !important;
+          }
+          .stButton > button[kind="primary"] *, [data-testid="stFormSubmitButton"] > button[kind="primary"] *,
+          [data-testid="stBaseButton-primary"] *, [data-testid="stBaseButton-primaryFormSubmit"] * {
+            color:#fff !important; -webkit-text-fill-color:#fff !important;
+          }
+          .stButton > button[kind="primary"]:hover, [data-testid="stBaseButton-primary"]:hover,
+          [data-testid="stBaseButton-primaryFormSubmit"]:hover {
+            background:var(--green) !important; border-color:var(--green) !important;
+          }
+          [data-testid="stSelectbox"] > div, [data-testid="stTextInput"] input { border-radius:10px; }
+          [data-testid="stExpander"] { border:1px solid var(--line); border-radius:13px; }
+          @media (max-width:700px) { .block-container { padding:1rem .85rem 2.2rem; } .masthead { align-items:flex-start; } .planperm-hero { border-radius:16px; min-height:168px; padding:1.1rem; } .brand-detail { display:none; } .hero-metrics { gap:.38rem; } .hero-stat { padding:.46rem .5rem; } .hero-stat strong { font-size:1.22rem; } .st-key-assistant_card { height:500px; margin-top:.25rem; } }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-radius_km = st.sidebar.slider(
-    "Search radius (km)",
-    MIN_RADIUS_KM, MAX_RADIUS_KM, DEFAULT_RADIUS_KM, 0.25,
-)
 
-# Sidebar info
-st.sidebar.markdown("---")
-if LLM_API_KEY:
-    st.sidebar.success("🤖 AI agent active", icon="✅")
+def ensure_state() -> None:
+    if "site" not in st.session_state:
+        st.session_state.site = DEFAULT_SITE.copy()
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = st.query_params.get("theme") == "dark"
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "search_error" not in st.session_state:
+        st.session_state.search_error = ""
+    if "workspace_id" not in st.session_state:
+        st.session_state.workspace_id = None
+
+
+def set_site(lat: float, lon: float, label: str) -> None:
+    current = st.session_state.site
+    has_changed = abs(current["lat"] - lat) > 0.00005 or abs(current["lon"] - lon) > 0.00005
+    st.session_state.site = {"lat": lat, "lon": lon, "label": label}
+    if has_changed:
+        st.session_state.messages = []
+
+
+def safe_text(value: Any) -> str:
+    return html.escape(str(value or "—"))
+
+
+def strip_route_prefix(message: dict[str, Any]) -> str:
+    """An assistant turn without its "Routed to: ..." banner.
+
+    That banner is UI chrome showing which specialist answered. Feeding it back
+    as conversation would teach the model to imitate it.
+    """
+    content = str(message.get("content") or "")
+    if message.get("role") != "assistant" or not content.startswith("**Routed to:"):
+        return content
+    _, _, rest = content.partition("\n\n")
+    return rest or content
+
+
+def save_uploaded_draft(uploaded_file: Any) -> str | None:
+    """Write an uploaded PDF to a temp file so the draft agent can read it."""
+    if uploaded_file is None:
+        st.session_state.pop("draft_pdf_path", None)
+        st.session_state.pop("draft_pdf_signature", None)
+        return None
+    signature = f"{uploaded_file.name}:{uploaded_file.size}"
+    if st.session_state.get("draft_pdf_signature") != signature:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(uploaded_file.getvalue())
+            st.session_state.draft_pdf_path = tmp.name
+        st.session_state.draft_pdf_signature = signature
+    return str(st.session_state.get("draft_pdf_path") or "") or None
+
+
+def application_popup(application: dict[str, Any]) -> str:
+    source_url = str(application.get("link") or "")
+    if not source_url.startswith(("https://", "http://")):
+        source_url = "https://services.arcgis.com/NzlPQPKn5QF9v2US/arcgis/rest/services/Planning_Applications_Ireland_PreProd/FeatureServer/0"
+
+    description = str(application.get("description") or "Planning application details are available in the original record.")
+    short_description = safe_text(description[:260] + ("…" if len(description) > 260 else ""))
+    return f"""
+      <div style="font-family:Arial,sans-serif;min-width:268px;max-width:320px;color:#173d3d;line-height:1.42;padding:2px">
+        <div style="align-items:center;border-bottom:1px solid #dbe6e1;display:flex;justify-content:space-between;padding-bottom:9px">
+          <span style="background:{DECISION_COLORS.get(application['decision'], '#64748b')};border-radius:999px;color:#fff;font-size:10px;font-weight:700;letter-spacing:.07em;padding:4px 7px">{safe_text(application['decision'])}</span>
+          <span style="color:#71827c;font-size:10px;font-weight:700;letter-spacing:.06em">PLANNING RECORD</span>
+        </div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:-.02em;margin:10px 0 4px">{safe_text(application['application_ref'])}</div>
+        <div style="color:#36544e;font-size:12px;font-weight:600;margin-bottom:10px">{safe_text(application['address'])}</div>
+        <div style="background:#f1f6f3;border-radius:8px;color:#516660;font-size:11px;margin-bottom:10px;padding:7px 8px"><strong style="color:#30534a">{safe_text(application['application_type'])}</strong><br>Received {safe_text(application['date_received'])}</div>
+        <div style="color:#526761;font-size:12px;margin-bottom:12px">{short_description}</div>
+        <a href="{html.escape(source_url, quote=True)}" target="_blank" rel="noopener noreferrer" style="align-items:center;background:#0f766e;border-radius:8px;color:#fff;display:flex;font-size:12px;font-weight:700;justify-content:center;padding:9px 10px;text-decoration:none">View original planning record ↗</a>
+      </div>
+    """
+
+
+def build_map(site: dict[str, Any], applications: list[dict[str, Any]], radius_km: float) -> folium.Map:
+    planning_map = folium.Map(
+        location=[site["lat"], site["lon"]],
+        zoom_start=13 if radius_km >= 2 else 14,
+        tiles="OpenStreetMap",
+        control_scale=True,
+        prefer_canvas=True,
+        doubleClickZoom=False,
+        scrollWheelZoom=True,
+    )
+    Draw(
+        position="topleft",
+        draw_options={
+            "polyline": False,
+            "polygon": False,
+            "rectangle": False,
+            "circle": False,
+            "circlemarker": False,
+            "marker": {"repeatMode": False},
+        },
+        edit_options={"edit": False, "remove": False},
+    ).add_to(planning_map)
+    folium.Circle(
+        location=[site["lat"], site["lon"]],
+        radius=radius_km * 1000,
+        color="#0f766e",
+        fill=True,
+        fill_opacity=0.04,
+        weight=2,
+    ).add_to(planning_map)
+    folium.Marker(
+        location=[site["lat"], site["lon"]],
+        tooltip="Selected site",
+        icon=folium.Icon(color="darkgreen", icon="home", prefix="fa"),
+    ).add_to(planning_map)
+
+    for application in applications[:MAP_MARKER_LIMIT]:
+        decision = application["decision"]
+        folium.CircleMarker(
+            location=[application["lat"], application["lon"]],
+            radius=6,
+            color="#ffffff",
+            weight=1.5,
+            fill=True,
+            fill_color=DECISION_COLORS.get(decision, "#64748b"),
+            fill_opacity=0.96,
+            tooltip=f"{decision}: {application['application_ref']}",
+            popup=folium.Popup(application_popup(application), max_width=360),
+        ).add_to(planning_map)
+    return planning_map
+
+
+def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], radius_km: float) -> None:
+    site_label = str(site["label"])
+    st.markdown(
+        f"""
+        <div class='assistant-anchor'></div>
+        <div class='assistant-header'>
+          <div class='assistant-glyph'>✦</div>
+          <div><div class='assistant-title'>PlanPerm assistant</div><div class='assistant-subtitle'>{safe_text(site_label)}</div></div>
+        </div>
+        <div class='assistant-ready'>Planning context ready</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    uploaded_draft = st.file_uploader(
+        "Draft PDF (optional — enables document review)",
+        type=["pdf"],
+        key="draft_pdf_upload",
+    )
+    pdf_path = save_uploaded_draft(uploaded_draft)
+    history = st.container(height=330, border=False, key="assistant_history")
+    with history:
+        if not st.session_state.messages:
+            st.markdown("<div class='assistant-welcome'>Ask about the selected site, nearby decisions, or a planning record on the map.</div>", unsafe_allow_html=True)
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.write(message["content"])
+
+    if prompt := st.chat_input("Ask PlanPerm", key="assistant_prompt"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with history:
+            with st.chat_message("user"):
+                st.write(prompt)
+        with st.spinner("Finding the right planning specialist..."):
+            result = run_planning_graph(
+                question=prompt,
+                lat=float(site["lat"]),
+                lng=float(site["lon"]),
+                radius_km=radius_km,
+                site_label=site_label,
+                records=applications,
+                pdf_path=pdf_path,
+                # Without this the watch route has no workspace to scan, so a
+                # question the router sends to `watch` would answer "no area is
+                # being watched" even when one is.
+                workspace_id=st.session_state.get("workspace_id") or "",
+                # Everything before this turn, so "20 kms?" resolves against
+                # the question it follows. The assistant's own routing prefix
+                # is stripped - it is UI chrome, not part of the conversation.
+                chat_history=[
+                    {"role": message["role"], "content": strip_route_prefix(message)}
+                    for message in st.session_state.messages[-8:-1]
+                ],
+            )
+        decision = result.get("orchestrator", {})
+        answer = result.get("response", result.get("advice", "No response returned."))
+        content = f"**Routed to: {decision.get('route', 'advisor')}** ({decision.get('method', 'existing graph')})\n\n{answer}"
+        st.session_state.messages.append({"role": "assistant", "content": content})
+        with history:
+            with st.chat_message("assistant"):
+                st.write(content)
+
+
+ensure_state()
+masthead_brand, masthead_theme = st.columns([5.7, 0.8], vertical_alignment="center")
+with masthead_brand:
+    st.markdown("<div class='masthead'><div class='brand-lockup'><span class='brand-mark'><svg viewBox='0 0 34 34' fill='none' aria-hidden='true'><rect x='3.5' y='3.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4'/><rect x='18.5' y='3.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4' opacity='0.32'/><rect x='3.5' y='18.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4' opacity='0.32'/><rect x='18.5' y='18.5' width='12' height='12' rx='2' fill='currentColor'/></svg></span><span>planperm</span><span class='brand-detail'>Planning intelligence</span></div></div>", unsafe_allow_html=True)
+with masthead_theme:
+    current_dark_mode = bool(st.session_state.get("dark_mode", False))
+    theme_label_column, theme_toggle_column = st.columns([1.55, 1], vertical_alignment="center")
+    with theme_label_column:
+        st.markdown(
+            f"<div class='theme-label'>{'Light' if current_dark_mode else 'Dark'}</div>",
+            unsafe_allow_html=True,
+        )
+    with theme_toggle_column:
+        dark_mode = st.toggle("Theme switch", key="dark_mode", help="Switch workspace theme", label_visibility="collapsed")
+apply_theme(dark_mode)
+
+site = st.session_state.site
+if "radius_km" not in st.session_state:
+    st.session_state.radius_km = 2.0
+radius_km = float(st.session_state.radius_km)
+with st.spinner("Loading nearby applications..."):
+    try:
+        applications = fetch_nearby_applications(site["lat"], site["lon"], radius_km)
+        fetch_error = ""
+    except RuntimeError as error:
+        applications = []
+        fetch_error = str(error)
+summary = summarize_applications(applications)
+approval_metric = f"{summary['approval_rate']}%" if summary["approval_rate"] is not None else "—"
+
+# The fetch stops at a record cap. Where it did, the real total comes from a
+# server-side count of the circle - otherwise the headline would quietly be the
+# cap. The decision counts still come from the records actually fetched, so
+# they are a sample when the list is incomplete, and labelled as one.
+if applications:
+    area_count, list_complete = area_total(site["lat"], site["lon"], radius_km)
 else:
-    st.sidebar.warning("🤖 No API key — using basic mode", icon="⚠️")
-    st.sidebar.caption("Set `OPENAI_API_KEY` env var to enable the AI agent.")
+    area_count, list_complete = 0, True
 
-st.sidebar.markdown("---")
-st.sidebar.markdown(
-    '<div class="disclaimer-bar">⚠️ Informational only. Not legal advice. '
-    'Consult a planning professional before submitting.</div>',
+total_metric = f"{area_count:,}"
+refused_metric = (
+    f"{summary['refused']:,}" if list_complete else f"{summary['refused']:,}+"
+)
+
+st.markdown(
+    f"""
+    <section class="planperm-hero">
+      <div class="eyebrow">Local planning intelligence</div>
+      <p>Live planning decisions and source records around your selected site.</p>
+      <div class="hero-metrics">
+        <div class="hero-stat"><span>Applications</span><strong>{total_metric}</strong></div>
+        <div class="hero-stat"><span>Approval rate</span><strong>{approval_metric}</strong></div>
+        <div class="hero-stat"><span>Refused</span><strong>{refused_metric}</strong></div>
+      </div>
+    </section>
+    """,
     unsafe_allow_html=True,
 )
 
-# ── Landing page ─────────────────────────────────────────────────────────────
+controls_column, map_column, assistant_column = st.columns([1.15, 3.25, 1.35], gap="medium")
 
-if not location_input:
-    st.title("📍 PlanPerm")
-    st.markdown(
-        "Enter any location in Ireland to see planning permission patterns, "
-        "approval rates, and get AI-powered advice on your development plans.\n\n"
-        "**Try:** Rathmines · Athlone · Swords · Cork · Galway · Killarney"
-    )
-    st.stop()
+with controls_column:
+    with st.container(border=False):
+        st.markdown("<div class='planperm-kicker'>Search</div>", unsafe_allow_html=True)
+        with st.form("site_search", border=False):
+            search_query = st.text_input("Location", placeholder="Town or address", label_visibility="collapsed")
+            find_site = st.form_submit_button("Find site", type="primary", use_container_width=True)
+        if find_site:
+            coordinates = resolve_location(search_query) if search_query.strip() else None
+            if coordinates is None:
+                st.session_state.search_error = "Location not found. Try a town or address."
+            else:
+                set_site(coordinates[0], coordinates[1], search_query.strip())
+                st.session_state.search_error = ""
+                st.rerun()
+        if st.session_state.search_error:
+            st.error(st.session_state.search_error)
+        st.markdown("<div class='map-note'>Use the pin tool on the map to select a site. Pan and zoom without changing the planning record.</div>", unsafe_allow_html=True)
 
-# ── Resolve location ─────────────────────────────────────────────────────────
-
-coords = resolve_location(location_input)
-
-if coords is None:
-    st.error(f"Could not find location: '{location_input}'. Try a town or area name in Ireland.")
-    st.stop()
-
-centre_lat, centre_lon = coords
-
-# ── Load data ────────────────────────────────────────────────────────────────
-
-area_key = location_input.strip().lower().replace(" ", "_")
-
-with st.spinner("Fetching planning data from MyPlan.ie..."):
-    apps = query_cached(area_key, centre_lat, centre_lon, radius_km)
-
-if not apps:
-    st.warning(
-        "No planning applications found in this radius. "
-        "Try increasing the search radius or a different location."
-    )
-    st.stop()
-
-# ── Compute stats ────────────────────────────────────────────────────────────
-
-stats = compute_stats(apps)
-timeline = compute_timeline_stats(apps)
-appeals = compute_appeal_stats(apps)
-
-# ── Header ───────────────────────────────────────────────────────────────────
-
-st.title(f"📍 Planning in {location_input.title()}")
-st.caption(f"Data source: MyPlan.ie (ArcGIS) · {len(apps)} applications · {radius_km}km radius")
-
-# ── Key metrics row ──────────────────────────────────────────────────────────
-
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Applications", stats["total"])
-m2.metric("Approval Rate", f"{stats['approval_rate']}%" if stats["approval_rate"] is not None else "N/A")
-m3.metric("Avg Decision Time", f"{timeline['avg_days']} days" if timeline and timeline.get("avg_days") else "N/A")
-m4.metric("Appeals Success", f"{appeals['appeal_success_rate']}%" if appeals and appeals.get("appeals_filed", 0) > 0 else "N/A")
-
-# ── Map + Stats columns ─────────────────────────────────────────────────────
-
-col_map, col_stats = st.columns([3, 2])
-
-# ── Map ──────────────────────────────────────────────────────────────────────
-
-with col_map:
-    df = pd.DataFrame(apps)
-
-    colour_map = {
-        "GRANTED": [34, 197, 94, 180],
-        "REFUSED": [239, 68, 68, 180],
-        "PENDING": [234, 179, 8, 180],
-        "WITHDRAWN": [148, 163, 184, 180],
-    }
-    default_colour = [148, 163, 184, 180]
-    df["colour"] = df["decision"].map(lambda d: colour_map.get(d, default_colour))
-
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=df,
-        get_position=["lon", "lat"],
-        get_fill_color="colour",
-        get_radius=30,
-        pickable=True,
-        auto_highlight=True,
-    )
-
-    view = pdk.ViewState(
-        latitude=centre_lat,
-        longitude=centre_lon,
-        zoom=14,
-        pitch=0,
-    )
-
-    tooltip = {
-        "html": (
-            "<b>{application_ref}</b><br/>"
-            "{address}<br/>"
-            "<i>{description}</i><br/>"
-            "Decision: <b>{decision}</b><br/>"
-            "Type: {application_type}<br/>"
-            "Received: {date_received}<br/>"
-            "Decided: {date_decided}"
-        ),
-        "style": {"backgroundColor": "#1e293b", "color": "white", "fontSize": "12px"},
-    }
-
-    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view, tooltip=tooltip))
-    st.markdown("🟢 Granted &nbsp;&nbsp; 🔴 Refused &nbsp;&nbsp; 🟡 Pending &nbsp;&nbsp; ⚪ Withdrawn")
-
-# ── Stats panel ──────────────────────────────────────────────────────────────
-
-with col_stats:
-    st.subheader("Area Statistics")
-    st.markdown(format_stats_text(stats))
-
-    # Timeline trend
-    if timeline and timeline.get("by_year"):
-        st.subheader("Approval Trend")
-        year_data = pd.DataFrame([
-            {"Year": str(y), "Approval Rate %": r}
-            for y, r in sorted(timeline["by_year"].items())
-        ])
-        if not year_data.empty:
-            st.bar_chart(year_data.set_index("Year"))
-
-        if timeline.get("trend"):
-            st.caption(timeline["trend"])
-
-    # Appeal stats
-    if appeals and appeals.get("appeals_filed", 0) > 0:
-        st.subheader("Appeals")
-        st.markdown(
-            f"Of **{appeals['total_refused']}** refusals, "
-            f"**{appeals['appeals_filed']}** were appealed ({appeals['appeal_rate']}%). "
-            f"**{appeals['appeals_granted']}** appeals succeeded ({appeals['appeal_success_rate']}%)."
+    st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+    with st.container(border=False):
+        st.markdown("<div class='planperm-kicker'>Radius</div>", unsafe_allow_html=True)
+        st.select_slider(
+            "Search radius",
+            options=RADIUS_OPTIONS,
+            key="radius_km",
+            format_func=lambda value: f"{value:g} km",
+            label_visibility="collapsed",
         )
 
-# ── Application detail expander ──────────────────────────────────────────────
+    st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+    with st.container(border=False):
+        render_watch_control(site, radius_km)
 
-st.markdown("---")
-
-with st.expander("📋 Browse all applications", expanded=False):
-    display_df = pd.DataFrame(apps)
-
-    # Select and rename columns for display
-    display_cols = {
-        "application_ref": "Ref",
-        "address": "Address",
-        "description": "Description",
-        "application_type": "Type",
-        "decision": "Decision",
-        "date_received": "Received",
-        "date_decided": "Decided",
-        "council": "Council",
-    }
-    available = [c for c in display_cols if c in display_df.columns]
-    show_df = display_df[available].rename(columns=display_cols)
-
-    # Decision filter
-    decision_filter = st.multiselect(
-        "Filter by decision",
-        options=["GRANTED", "REFUSED", "PENDING", "WITHDRAWN"],
-        default=["GRANTED", "REFUSED", "PENDING"],
+with map_column:
+    st.markdown(
+        f"<div class='site-line'><span class='dot'></span>"
+        f"<span>{safe_text(site['label'])}</span><span>·</span>"
+        f"<span>{radius_km:g} km radius</span><span>·</span>"
+        f"<span>{area_count:,} records</span>"
+        + (
+            f"<span>·</span><span>list holds nearest {len(applications):,}</span>"
+            if not list_complete else ""
+        )
+        + (
+            f"<span>·</span><span>map shows nearest {min(len(applications), MAP_MARKER_LIMIT)}</span>"
+            if len(applications) > MAP_MARKER_LIMIT else ""
+        )
+        + "</div>",
+        unsafe_allow_html=True,
     )
-    if decision_filter:
-        show_df = show_df[show_df["Decision"].isin(decision_filter)]
+    if fetch_error:
+        st.warning(fetch_error)
+    planning_map = build_map(site, applications, radius_km)
+    map_key = f"map-{site['lat']:.5f}-{site['lon']:.5f}-{radius_km}"
+    st.markdown("<div class='map-frame'>", unsafe_allow_html=True)
+    map_state = st_folium(
+        planning_map,
+        height=570,
+        use_container_width=True,
+        key=map_key,
+        returned_objects=["last_active_drawing"],
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+    selected_drawing = map_state.get("last_active_drawing") if map_state else None
+    geometry = selected_drawing.get("geometry", {}) if isinstance(selected_drawing, dict) else {}
+    coordinates = geometry.get("coordinates", []) if isinstance(geometry, dict) else []
+    if geometry.get("type") == "Point" and isinstance(coordinates, list) and len(coordinates) >= 2:
+        clicked_lon, clicked_lat = float(coordinates[0]), float(coordinates[1])
+        if abs(site["lat"] - clicked_lat) > 0.00005 or abs(site["lon"] - clicked_lon) > 0.00005:
+            set_site(clicked_lat, clicked_lon, f"Pinned site · {clicked_lat:.5f}, {clicked_lon:.5f}")
+            st.rerun()
 
-    st.dataframe(show_df, use_container_width=True, height=400)
+with assistant_column:
+    with st.container(border=True, key="assistant_card"):
+        assistant_panel(site, applications, radius_km)
 
-    # Source links
-    linked = [a for a in apps if a.get("link")]
-    if linked:
-        st.caption(f"{len(linked)} applications have direct links to council records.")
-
-# ── Chat interface ───────────────────────────────────────────────────────────
-
-st.markdown("---")
-st.subheader("💬 Ask about this area")
-
-if LLM_API_KEY:
-    st.caption("AI agent powered by LLM with function-calling — answers are grounded in the real data above.")
-else:
-    st.caption("Basic mode — set OPENAI_API_KEY for smarter answers.")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Display chat history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-# Chat input
-if prompt := st.chat_input("e.g. What are my chances for a rear extension?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            # Build chat history for context (user/assistant pairs only)
-            history = [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages[:-1]  # exclude the just-added user msg
-            ]
-            response = run_agent(prompt, apps, stats, chat_history=history)
-
-        st.markdown(response)
-
-    st.session_state.messages.append({"role": "assistant", "content": response})
+# Below the map, full width. The records list answers "what is here?" and the
+# watch findings answer "what is new?" - in that order, because the first is
+# what someone asks first.
+render_records(applications, str(site["label"]))
+render_watch_results(site)
