@@ -131,8 +131,12 @@ def apply_theme(dark_mode: bool) -> None:
           .st-key-assistant_card [data-testid="stChatInput"] { margin-top:.35rem; }
           /* Magnify control. Sits in the card header and toggles the overlay
              below. Styled as a quiet icon button so it reads as chrome rather
-             than a primary action. */
-          .st-key-assistant_magnify button { align-items:center; background:transparent !important; border:1px solid var(--line) !important; border-radius:9px !important; color:var(--muted) !important; display:flex !important; font-size:.92rem !important; height:2rem !important; justify-content:center; min-height:2rem !important; padding:0 !important; transition:background 140ms ease, color 140ms ease, transform 140ms ease; width:2rem !important; }
+             than a primary action. The wrapper is flexed to the right because
+             its column is proportional: at the overlay's 1080px the column is
+             ~180px wide, so a left-aligned 2rem button floats well short of
+             the edge. */
+          .st-key-assistant_magnify { display:flex !important; justify-content:flex-end !important; }
+          .st-key-assistant_magnify button { align-items:center; background:transparent !important; border:1px solid var(--line) !important; border-radius:9px !important; color:var(--muted) !important; display:flex !important; flex:0 0 auto !important; font-size:.92rem !important; height:2rem !important; justify-content:center; min-height:2rem !important; padding:0 !important; transition:background 140ms ease, color 140ms ease, transform 140ms ease; width:2rem !important; }
           .st-key-assistant_magnify button:hover { background:var(--soft) !important; color:var(--ink) !important; transform:none !important; }
           .st-key-assistant_magnify button p { font-size:.92rem !important; line-height:1 !important; margin:0 !important; }
           @keyframes assistantZoomIn { from { opacity:0; transform:translate(-50%,-50%) scale(.965); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
