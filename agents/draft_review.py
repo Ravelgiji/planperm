@@ -114,7 +114,7 @@ def _ask_llm_review(state: dict[str, Any]) -> str:
 
     api_key = os.environ["OPENAI_API_KEY"]
     base_url = os.environ.get("PLANPERM_LLM_BASE_URL")
-    model = os.environ.get("PLANPERM_LLM_MODEL", "gpt-4o-mini")
+    model = os.environ.get("PLANPERM_LLM_MODEL", "gpt-4.1-mini")
 
     client = OpenAI(api_key=api_key, **({"base_url": base_url} if base_url else {}))
     context = _build_review_context(state)

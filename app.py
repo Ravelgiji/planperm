@@ -12,12 +12,25 @@ from folium.plugins import Draw
 from streamlit_folium import st_folium
 
 from agents.graph import run as run_planning_graph
+from core.env import load_env
 from geocoder import resolve_location
-from planning_data import fetch_nearby_applications, summarize_applications
+from planning_data import area_total, fetch_nearby_applications, summarize_applications
+from views.records import render_records
+from views.watch import render_watch_control, render_watch_results
+
+# The orchestrator and the agents read OPENAI_API_KEY straight from the
+# environment, and nothing was reading the .env file LOCAL_SETUP.md tells you
+# to create - so the key never arrived and semantic routing silently degraded
+# to the rule-based fallback. Load it before any agent import is used.
+load_env()
 
 
 DEFAULT_SITE = {"lat": 53.2707, "lon": -9.0568, "label": "Galway, Ireland"}
 RADIUS_OPTIONS = [0.5, 1.0, 2.0, 3.0, 5.0]
+# Markers drawn on the map. The stats use every record; plotting several
+# thousand pins would make pan and zoom unusable, so the map shows the
+# nearest few and the site line says so.
+MAP_MARKER_LIMIT = 150
 HERO_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663940374058/eqTMQcrXTmJCYOhP.jpg"
 DECISION_COLORS = {
     "GRANTED": "#0f766e",
@@ -32,7 +45,7 @@ st.set_page_config(page_title="PlanPerm", page_icon="✦", layout="wide", initia
 
 def apply_theme(dark_mode: bool) -> None:
     mode = """
-      :root { --ink:#e8f0ec; --paper:#0d1619; --surface:#142124; --surface-2:#19292d; --composer:#102024; --line:#294047; --green:#33b7a8; --green-deep:#167d73; --muted:#a0b1ae; --soft:#203338; --shadow:#02080977; }
+      :root { --ink:#e8f0ec; --paper:#0d1619; --surface:#142124; --surface-2:#19292d; --composer:#102024; --line:#294047; --green:#33b7a8; --green-deep:#167d73; --muted:#a0b1ae; --soft:#203338; --shadow:#02080977; --urgent:#e08a3c; --urgent-tint:#2a1f16; --urgent-edge:#4d3520; --closing:#d3a04a; --closing-tint:#262017; --closing-edge:#4a3d22; --settled:#94a3b8; --settled-tint:#1b2327; --settled-edge:#33414a; }
       .stApp { background: radial-gradient(circle at 85% 2%, #1c484344, transparent 26rem), linear-gradient(145deg, #0c1417, #101d20); }
       .planperm-hero { background-image: linear-gradient(90deg, #0f1c1fe8 0%, #0f1c1fc7 38%, #0f1c1f1a 74%, #0f1c1f36), url('""" + HERO_IMAGE + """'); }
       [data-testid="stMetric"] { background: linear-gradient(145deg, #19282b, #122024); }
@@ -43,7 +56,7 @@ def apply_theme(dark_mode: bool) -> None:
           [data-testid="stTextInput"] input, [data-testid="stChatInput"], [data-testid="stChatInput"] textarea { background:#102024 !important; color:var(--ink) !important; }
       .hero-stat { background:#112629c7; border-color:#38645f; }
     """ if dark_mode else """
-      :root { --ink:#12383c; --paper:#f5f4ee; --surface:#fffefb; --surface-2:#f0f5ef; --composer:#fffefb; --line:#dce1da; --green:#0f766e; --green-deep:#0b5c56; --muted:#69746f; --soft:#edf4f0; --shadow:#173c3110; }
+      :root { --ink:#12383c; --paper:#f5f4ee; --surface:#fffefb; --surface-2:#f0f5ef; --composer:#fffefb; --line:#dce1da; --green:#0f766e; --green-deep:#0b5c56; --muted:#69746f; --soft:#edf4f0; --shadow:#173c3110; --urgent:#b45309; --urgent-tint:#fdefe4; --urgent-edge:#f0d3bb; --closing:#b7791f; --closing-tint:#fdf6e9; --closing-edge:#ecdcb8; --settled:#64748b; --settled-tint:#f3f3f1; --settled-edge:#dcdedb; }
       .stApp { background: radial-gradient(circle at 82% 4%, #dcebe155, transparent 23rem), var(--paper); }
       .planperm-hero { background-image: linear-gradient(90deg, #f7f4ecf5 0%, #f7f4ecdf 38%, #f7f4ec3d 71%, #f7f4ec00), url('""" + HERO_IMAGE + """'); }
       [data-testid="stMetric"] { background: linear-gradient(145deg, #fffefc, #f7f8f3); }
@@ -54,9 +67,17 @@ def apply_theme(dark_mode: bool) -> None:
     st.markdown(
         """
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap');
           """ + mode + """
           .stApp, .stApp * { font-family: 'DM Sans', sans-serif; }
+          /* The rule above uses `*`, which also captures Streamlit's Material
+             icon spans — an icon font renders its ligature name as literal
+             text, so expander chevrons showed up as "keyboard_arrow_right".
+             Hand the icon font back to anything that needs it. */
+          [data-testid="stIconMaterial"], span.material-symbols-rounded,
+          span.material-symbols-outlined, .stApp [class*="material-symbols"] {
+            font-family: 'Material Symbols Rounded', 'Material Symbols Outlined' !important;
+          }
           .stApp, .stApp p, .stApp label, .stApp [data-testid="stMarkdownContainer"], .stApp [data-testid="stCaptionContainer"], .stApp [data-testid="stWidgetLabel"] p { color:var(--ink); }
           .stApp [data-testid="stCaptionContainer"], .stApp [data-testid="stWidgetLabel"] p { color:var(--muted) !important; }
           .stApp [data-testid="stTextInput"] input::placeholder, .stApp textarea::placeholder { color:var(--muted) !important; opacity:.9; }
@@ -68,12 +89,13 @@ def apply_theme(dark_mode: bool) -> None:
           h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
           [data-testid="stMetric"] { border: 1px solid var(--line); border-radius: 17px; box-shadow: 0 1px 1px var(--shadow), 0 11px 30px var(--shadow); min-height: 100px; padding: 1rem 1.1rem; }
           [data-testid="stMetricLabel"] { color: var(--muted); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-          [data-testid="stMetricValue"] { color: var(--ink); font-family: 'Fraunces', serif; font-weight: 650; }
+          [data-testid="stMetricValue"] { color: var(--ink); font-family: 'Newsreader', Georgia, serif; font-variant-numeric: tabular-nums; font-weight: 500; }
           [data-testid="stVerticalBlockBorderWrapper"] { background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; padding:0 !important; }
           .masthead { align-items:center; display:flex; justify-content:space-between; margin-bottom:.35rem; padding:.15rem 0 .45rem; }
           .brand-lockup { align-items:center; color:var(--ink); display:flex; font-size:1rem; font-weight:700; gap:.55rem; letter-spacing:-.03em; }
-          .brand-mark { background:var(--green); border-radius:7px 7px 7px 2px; box-shadow:inset 0 0 0 2px #ffffff55; display:inline-block; height:1.25rem; position:relative; width:1.25rem; }
-          .brand-mark:after { border:2px solid #fff; border-left:0; border-top:0; content:''; height:.44rem; left:.33rem; position:absolute; top:.29rem; transform:rotate(45deg); width:.22rem; }
+          .brand-mark { align-items:center; display:inline-flex; height:1.25rem; width:1.25rem; }
+          .brand-mark svg { display:block; height:100%; width:100%; }
+          .brand-lockup .brand-mark { color:var(--green); }
           .brand-detail { color:var(--muted); font-size:.68rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
           .theme-label { color:var(--muted); font-size:.68rem; font-weight:700; letter-spacing:.07em; margin-right:.18rem; text-align:right; text-transform:uppercase; }
           .planperm-hero { background-position:center right; background-repeat:no-repeat; background-size:cover; border:1px solid var(--line); border-radius:20px; box-shadow:0 14px 38px var(--shadow); margin:0 0 1.15rem; min-height:134px; overflow:hidden; padding:1.05rem 1.35rem; }
@@ -82,7 +104,7 @@ def apply_theme(dark_mode: bool) -> None:
           .hero-metrics { display:flex; gap:.55rem; margin-top:.75rem; max-width:540px; }
           .hero-stat { backdrop-filter:blur(10px); border:1px solid; border-radius:11px; min-width:0; padding:.5rem .7rem; flex:1; }
           .hero-stat span { color:var(--muted); display:block; font-size:.59rem; font-weight:750; letter-spacing:.08em; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
-          .hero-stat strong { color:var(--ink); display:block; font-family:'Fraunces', serif; font-size:1.42rem; line-height:1.1; margin-top:.12rem; }
+          .hero-stat strong { color:var(--ink); display:block; font-family:'Newsreader', Georgia, serif; font-size:1.46rem; font-variant-numeric:tabular-nums; font-weight:500; line-height:1.1; margin-top:.12rem; }
           .planperm-kicker { color:var(--green); font-size:.67rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
           .planperm-note, .map-note { color:var(--muted); font-size:.78rem; line-height:1.45; }
           .map-note { margin:.35rem 0 0; }
@@ -108,11 +130,34 @@ def apply_theme(dark_mode: bool) -> None:
           .st-key-assistant_card [data-testid="stChatInput"] button { background:transparent !important; }
           .st-key-assistant_card [data-testid="stChatInput"] { margin-top:.35rem; }
           .section-rule { background:var(--line); height:1px; margin:1rem 0; width:100%; }
+          .deadline { align-items:baseline; border-radius:9px; display:flex; flex-wrap:wrap; font-size:.82rem; gap:.4rem; margin:.35rem 0 0; padding:.42rem .6rem; }
+          .deadline .when { font-family:'Newsreader', Georgia, serif; font-size:.95rem; font-variant-numeric:tabular-nums; font-weight:500; }
+          .deadline-open { background:var(--soft); border:1px solid var(--line); border-left:3px solid var(--green); color:var(--green); }
+          .deadline-closing { background:var(--closing-tint); border:1px solid var(--closing-edge); border-left:3px solid var(--closing); color:var(--closing); }
+          .deadline-urgent { background:var(--urgent-tint); border:1px solid var(--urgent-edge); border-left:3px solid var(--urgent); color:var(--urgent); }
+          .deadline-closed { background:var(--settled-tint); border:1px solid var(--settled-edge); border-left:3px solid var(--settled); color:var(--settled); }
+          .estimate-badge { align-items:center; background:var(--settled-tint); border:1px solid var(--settled-edge); border-radius:6px; color:var(--settled); display:inline-flex; font-size:.6rem; font-weight:700; gap:.25rem; letter-spacing:.03em; padding:.1rem .35rem; text-transform:uppercase; vertical-align:middle; }
           [data-testid="stChatInput"] { border-color:var(--line); border-radius:11px; }
           .stButton > button, [data-testid="stFormSubmitButton"] > button { border-color:var(--line); border-radius:10px; color:var(--ink); font-weight:650; transition:transform 140ms ease, box-shadow 140ms ease; }
           .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover { box-shadow:0 5px 12px var(--shadow); transform:translateY(-1px); }
           .stButton > button:active, [data-testid="stFormSubmitButton"] > button:active { transform:scale(.98); }
-          .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button[kind="primary"] { background:var(--green-deep); border-color:var(--green-deep); color:#fff; }
+          /* Primary buttons. The label lives inside a stMarkdownContainer, and
+             the global rule above paints that element var(--ink) — which beat
+             this rule's `color` and left dark text on dark teal. Re-assert the
+             colour on the inner element, and cover the newer stBaseButton
+             testids as well as the older kind="primary" attribute. */
+          .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button[kind="primary"],
+          [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {
+            background:var(--green-deep) !important; border-color:var(--green-deep) !important; color:#fff !important;
+          }
+          .stButton > button[kind="primary"] *, [data-testid="stFormSubmitButton"] > button[kind="primary"] *,
+          [data-testid="stBaseButton-primary"] *, [data-testid="stBaseButton-primaryFormSubmit"] * {
+            color:#fff !important; -webkit-text-fill-color:#fff !important;
+          }
+          .stButton > button[kind="primary"]:hover, [data-testid="stBaseButton-primary"]:hover,
+          [data-testid="stBaseButton-primaryFormSubmit"]:hover {
+            background:var(--green) !important; border-color:var(--green) !important;
+          }
           [data-testid="stSelectbox"] > div, [data-testid="stTextInput"] input { border-radius:10px; }
           [data-testid="stExpander"] { border:1px solid var(--line); border-radius:13px; }
           @media (max-width:700px) { .block-container { padding:1rem .85rem 2.2rem; } .masthead { align-items:flex-start; } .planperm-hero { border-radius:16px; min-height:168px; padding:1.1rem; } .brand-detail { display:none; } .hero-metrics { gap:.38rem; } .hero-stat { padding:.46rem .5rem; } .hero-stat strong { font-size:1.22rem; } .st-key-assistant_card { height:500px; margin-top:.25rem; } }
@@ -131,6 +176,8 @@ def ensure_state() -> None:
         st.session_state.messages = []
     if "search_error" not in st.session_state:
         st.session_state.search_error = ""
+    if "workspace_id" not in st.session_state:
+        st.session_state.workspace_id = None
 
 
 def set_site(lat: float, lon: float, label: str) -> None:
@@ -143,6 +190,19 @@ def set_site(lat: float, lon: float, label: str) -> None:
 
 def safe_text(value: Any) -> str:
     return html.escape(str(value or "—"))
+
+
+def strip_route_prefix(message: dict[str, Any]) -> str:
+    """An assistant turn without its "Routed to: ..." banner.
+
+    That banner is UI chrome showing which specialist answered. Feeding it back
+    as conversation would teach the model to imitate it.
+    """
+    content = str(message.get("content") or "")
+    if message.get("role") != "assistant" or not content.startswith("**Routed to:"):
+        return content
+    _, _, rest = content.partition("\n\n")
+    return rest or content
 
 
 def save_uploaded_draft(uploaded_file: Any) -> str | None:
@@ -218,7 +278,7 @@ def build_map(site: dict[str, Any], applications: list[dict[str, Any]], radius_k
         icon=folium.Icon(color="darkgreen", icon="home", prefix="fa"),
     ).add_to(planning_map)
 
-    for application in applications[:150]:
+    for application in applications[:MAP_MARKER_LIMIT]:
         decision = application["decision"]
         folium.CircleMarker(
             location=[application["lat"], application["lon"]],
@@ -275,6 +335,17 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 site_label=site_label,
                 records=applications,
                 pdf_path=pdf_path,
+                # Without this the watch route has no workspace to scan, so a
+                # question the router sends to `watch` would answer "no area is
+                # being watched" even when one is.
+                workspace_id=st.session_state.get("workspace_id") or "",
+                # Everything before this turn, so "20 kms?" resolves against
+                # the question it follows. The assistant's own routing prefix
+                # is stripped - it is UI chrome, not part of the conversation.
+                chat_history=[
+                    {"role": message["role"], "content": strip_route_prefix(message)}
+                    for message in st.session_state.messages[-8:-1]
+                ],
             )
         decision = result.get("orchestrator", {})
         answer = result.get("response", result.get("advice", "No response returned."))
@@ -288,7 +359,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
 ensure_state()
 masthead_brand, masthead_theme = st.columns([5.7, 0.8], vertical_alignment="center")
 with masthead_brand:
-    st.markdown("<div class='masthead'><div class='brand-lockup'><span class='brand-mark'></span><span>planperm</span><span class='brand-detail'>Planning intelligence</span></div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='masthead'><div class='brand-lockup'><span class='brand-mark'><svg viewBox='0 0 34 34' fill='none' aria-hidden='true'><rect x='3.5' y='3.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4'/><rect x='18.5' y='3.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4' opacity='0.32'/><rect x='3.5' y='18.5' width='12' height='12' rx='2' stroke='currentColor' stroke-width='2.4' opacity='0.32'/><rect x='18.5' y='18.5' width='12' height='12' rx='2' fill='currentColor'/></svg></span><span>planperm</span><span class='brand-detail'>Planning intelligence</span></div></div>", unsafe_allow_html=True)
 with masthead_theme:
     current_dark_mode = bool(st.session_state.get("dark_mode", False))
     theme_label_column, theme_toggle_column = st.columns([1.55, 1], vertical_alignment="center")
@@ -315,15 +386,29 @@ with st.spinner("Loading nearby applications..."):
 summary = summarize_applications(applications)
 approval_metric = f"{summary['approval_rate']}%" if summary["approval_rate"] is not None else "—"
 
+# The fetch stops at a record cap. Where it did, the real total comes from a
+# server-side count of the circle - otherwise the headline would quietly be the
+# cap. The decision counts still come from the records actually fetched, so
+# they are a sample when the list is incomplete, and labelled as one.
+if applications:
+    area_count, list_complete = area_total(site["lat"], site["lon"], radius_km)
+else:
+    area_count, list_complete = 0, True
+
+total_metric = f"{area_count:,}"
+refused_metric = (
+    f"{summary['refused']:,}" if list_complete else f"{summary['refused']:,}+"
+)
+
 st.markdown(
     f"""
     <section class="planperm-hero">
       <div class="eyebrow">Local planning intelligence</div>
       <p>Live planning decisions and source records around your selected site.</p>
       <div class="hero-metrics">
-        <div class="hero-stat"><span>Applications</span><strong>{summary['total']}</strong></div>
+        <div class="hero-stat"><span>Applications</span><strong>{total_metric}</strong></div>
         <div class="hero-stat"><span>Approval rate</span><strong>{approval_metric}</strong></div>
-        <div class="hero-stat"><span>Refused</span><strong>{summary['refused']}</strong></div>
+        <div class="hero-stat"><span>Refused</span><strong>{refused_metric}</strong></div>
       </div>
     </section>
     """,
@@ -361,9 +446,25 @@ with controls_column:
             label_visibility="collapsed",
         )
 
+    st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+    with st.container(border=False):
+        render_watch_control(site, radius_km)
+
 with map_column:
     st.markdown(
-        f"<div class='site-line'><span class='dot'></span><span>{safe_text(site['label'])}</span><span>·</span><span>{radius_km:g} km radius</span></div>",
+        f"<div class='site-line'><span class='dot'></span>"
+        f"<span>{safe_text(site['label'])}</span><span>·</span>"
+        f"<span>{radius_km:g} km radius</span><span>·</span>"
+        f"<span>{area_count:,} records</span>"
+        + (
+            f"<span>·</span><span>list holds nearest {len(applications):,}</span>"
+            if not list_complete else ""
+        )
+        + (
+            f"<span>·</span><span>map shows nearest {min(len(applications), MAP_MARKER_LIMIT)}</span>"
+            if len(applications) > MAP_MARKER_LIMIT else ""
+        )
+        + "</div>",
         unsafe_allow_html=True,
     )
     if fetch_error:
@@ -391,3 +492,9 @@ with map_column:
 with assistant_column:
     with st.container(border=True, key="assistant_card"):
         assistant_panel(site, applications, radius_km)
+
+# Below the map, full width. The records list answers "what is here?" and the
+# watch findings answer "what is new?" - in that order, because the first is
+# what someone asks first.
+render_records(applications, str(site["label"]))
+render_watch_results(site)

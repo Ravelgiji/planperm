@@ -82,9 +82,20 @@ def _build_context(state: PlanningState) -> str:
         f"Site condition: {state.get('site_condition', 'Not specified')}",
     ]
 
+    # State the radius the figures cover, and its ceiling. Asked about "20 km",
+    # the advisor would otherwise answer from the 2 km set without saying the
+    # numbers were for a smaller area than requested.
+    radius = state.get("radius_km", 2.0)
+    parts.append(
+        f"Search radius for every figure below: {radius} km. The tool offers "
+        "0.5, 1, 2, 3 and 5 km only - if the user asks about a wider area, say "
+        "plainly that 5 km is the widest available and give the figures for the "
+        "current radius rather than estimating a larger one."
+    )
+
     summary = state.get("summary", {})
     if summary:
-        parts.append(f"\nNearby records: {summary.get('total', 0)} total, "
+        parts.append(f"\nNearby records within {radius} km: {summary.get('total', 0)} total, "
                       f"approval rate {summary.get('approval_rate', '?')}%, "
                       f"{summary.get('granted', 0)} granted, "
                       f"{summary.get('refused', 0)} refused.")
@@ -166,18 +177,27 @@ def _ask_llm(state: PlanningState) -> str:
 
     api_key = os.environ["OPENAI_API_KEY"]
     base_url = os.environ.get("PLANPERM_LLM_BASE_URL")
-    model = os.environ.get("PLANPERM_LLM_MODEL", "gpt-4o-mini")
+    model = os.environ.get("PLANPERM_LLM_MODEL", "gpt-4.1-mini")
 
     client = OpenAI(api_key=api_key, **({"base_url": base_url} if base_url else {}))
     question = state.get("question") or f"What do I need to prepare for a {state.get('construction_type', 'planning application')}?"
     context = _build_context(state)
 
+    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    # Prior turns, so a follow-up reads as a follow-up. Trimmed to the last few
+    # exchanges; the site context is rebuilt fresh each turn regardless.
+    for earlier in (state.get("chat_history") or [])[-6:]:
+        role = earlier.get("role")
+        content = str(earlier.get("content") or "").strip()
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content[:1500]})
+
+    messages.append({"role": "user", "content": f"{context}\n\nQuestion: {question}"})
+
     response = client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"{context}\n\nQuestion: {question}"},
-        ],
+        messages=messages,
         temperature=0.2,
         max_tokens=1000,
     )

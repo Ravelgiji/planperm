@@ -36,6 +36,13 @@ class PlanningState(TypedDict, total=False):
     question: str
     pdf_path: str
     site_label: str
+    # Recent turns, so a follow-up like "20 kms?" has a referent. Without it
+    # the router saw each message alone and sent bare follow-ups to clarify.
+    chat_history: list[dict[str, str]]
+    # Watch — a StateGraph with a TypedDict schema silently drops any key the
+    # schema does not declare, so without these the watch route never sees the
+    # workspace and always answers "no area is being watched".
+    workspace_id: str
     # Resolved
     jurisdiction: str
     authority: str
@@ -54,6 +61,13 @@ class PlanningState(TypedDict, total=False):
     draft_review: str
     response: str
     orchestrator: dict[str, Any]
+    watch_alerts: list[dict[str, Any]]
+    watch_new_alert_count: int
+    watch_new_baseline_count: int
+    watch_sources: list[dict[str, str]]
+    watch_sources_scanned: int
+    watch_briefing: str
+    watch_response: str
     # Meta
     errors: list[str]
 

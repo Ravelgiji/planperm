@@ -4,6 +4,9 @@ folium==0.19.5
 requests==2.32.3
 beautifulsoup4>=4.12,<5.0
 pypdf>=5.0,<6.0
+# Preserves column layout when reading weekly-list PDFs, which are tables.
+# pypdf is used as a fallback, so this is strongly preferred but not fatal.
+pdfplumber>=0.11,<1.0
 langgraph>=0.2
 langchain-core>=0.3
 langchain-openai>=0.2

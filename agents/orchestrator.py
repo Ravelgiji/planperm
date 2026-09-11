@@ -81,13 +81,40 @@ def _validate(value: Any) -> dict[str, Any] | None:
     return value
 
 
+def _recent_turns(state: dict[str, Any], limit: int = 6) -> str:
+    """The last few turns, for resolving a follow-up against what preceded it."""
+    history = state.get("chat_history") or []
+    if not history:
+        return "none - this is the first question"
+
+    lines = []
+    for message in history[-limit:]:
+        speaker = "User" if message.get("role") == "user" else "Assistant"
+        text = " ".join(str(message.get("content") or "").split())[:240]
+        if text:
+            lines.append(f"{speaker}: {text}")
+
+    return "\n".join(lines) or "none"
+
+
 def _semantic_prompt(query: str, state: dict[str, Any]) -> str:
     return f"""You route planning queries for PlanPerm. Classify only the user's primary outcome; do not answer the planning question.
 
 Routes:
 - draft: review an existing draft document or prepare application wording.
-- advisor: planning permission requirements, process, policy, evidence or next steps.
-- watch: monitor planning activity, receive updates, alerts or trend tracking.
+- watch: ONLY what is NEW since the user's last scan - newly published
+  weekly-list documents, and observation deadlines on applications in them.
+  "What changed?", "anything new?", "any new applications this week?",
+  "what are the deadlines?" belong here.
+  The Watch Agent knows nothing about applications published before the last
+  scan, so it CANNOT answer what exists at a place. Never send a question about
+  existing or historic applications here.
+- advisor: everything about what ALREADY EXISTS or is typical - "are there any
+  applications at X?", "what has been applied for near here?", "how many
+  applications / what is the approval rate?", "has anything been refused
+  nearby?", "what do I need to apply?", requirements, process, policy,
+  precedents. Questions naming a place and asking what is registered,
+  submitted, granted or refused there are ADVISOR questions.
 - coordinator: presentation, research synthesis or combining agent outputs.
 - clarify: unclear, low confidence or multiple independent outcomes.
 
@@ -95,8 +122,14 @@ The selected site and nearby records are sufficient context for a short query su
 
 The current Draft Agent reviews an already uploaded PDF only. Choose draft only when `pdf_uploaded` is true. If a user requests document drafting or review with no uploaded PDF, choose clarify and request an uploaded PDF. Set split_task=true and route=clarify when a user asks for independent outcomes, for example permission advice plus a separate document review. A Watch Agent may be connected separately.
 
+Recent conversation (use it to resolve a short follow-up - "20 kms?" after a
+question about applications near a place is still that same question, with a
+different radius, and routes where the earlier question routed; only choose
+clarify when the history genuinely does not settle it):
+{_recent_turns(state)}
+
 User query: {query}
-Safe context: site={state.get('site_label') or f"{state.get('lat', 'unknown')},{state.get('lng', 'unknown')}"}; radius_km={state.get('radius_km', 'not supplied')}; nearby_record_count={len(state.get('records') or [])}; pdf_uploaded={bool(state.get('pdf_path'))}"""
+Safe context: site={state.get('site_label') or f"{state.get('lat', 'unknown')},{state.get('lng', 'unknown')}"}; radius_km={state.get('radius_km', 'not supplied')}; nearby_record_count={len(state.get('records') or [])}; pdf_uploaded={bool(state.get('pdf_path'))}; watched_area_saved={bool(state.get('workspace_id'))}"""
 
 
 def classify_with_llm(query: str, state: dict[str, Any]) -> dict[str, Any] | None:
@@ -110,7 +143,7 @@ def classify_with_llm(query: str, state: dict[str, Any]) -> dict[str, Any] | Non
         from openai import OpenAI
 
         base_url = os.getenv("PLANPERM_LLM_BASE_URL")
-        model = os.getenv("PLANPERM_LLM_MODEL", "gpt-4o-mini")
+        model = os.getenv("PLANPERM_LLM_MODEL", "gpt-4.1-mini")
         client = OpenAI(api_key=api_key, **({"base_url": base_url} if base_url else {}))
 
         response = client.chat.completions.create(

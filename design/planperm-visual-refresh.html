@@ -1,0 +1,730 @@
+<title>PlanPerm Visual Refresh</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+<style>
+  /* PlanPerm's own tokens, lifted from app.py — the existing system wins.
+     Light is the bare :root; dark redefines only the tokens. */
+  :root {
+    --paper: #f5f4ee;
+    --surface: #fffefb;
+    --surface-2: #f0f5ef;
+    --soft: #edf4f0;
+    --line: #dce1da;
+    --ink: #12383c;
+    --muted: #69746f;
+    --green: #0f766e;
+    --green-deep: #0b5c56;
+    --green-tint: #edf4f0;
+    --green-edge: #cfe0d8;
+    --amber: #b45309;
+    --amber-tint: #fdefe4;
+    --amber-edge: #f0d3bb;
+    --gold: #b7791f;
+    --gold-tint: #fdf6e9;
+    --gold-edge: #ecdcb8;
+    --slate: #64748b;
+    --slate-tint: #f3f3f1;
+    --slate-edge: #dcdedb;
+    --shadow: #173c3110;
+    --shadow-strong: #173c311f;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0d1619;
+      --surface: #142124;
+      --surface-2: #19292d;
+      --soft: #203338;
+      --line: #294047;
+      --ink: #e8f0ec;
+      --muted: #a0b1ae;
+      --green: #33b7a8;
+      --green-deep: #167d73;
+      --green-tint: #142b2c;
+      --green-edge: #2a4f4b;
+      --amber: #e08a3c;
+      --amber-tint: #2a1f16;
+      --amber-edge: #4d3520;
+      --gold: #d3a04a;
+      --gold-tint: #262017;
+      --gold-edge: #4a3d22;
+      --slate: #94a3b8;
+      --slate-tint: #1b2327;
+      --slate-edge: #33414a;
+      --shadow: #0208090f;
+      --shadow-strong: #02080926;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0d1619;
+    --surface: #142124;
+    --surface-2: #19292d;
+    --soft: #203338;
+    --line: #294047;
+    --ink: #e8f0ec;
+    --muted: #a0b1ae;
+    --green: #33b7a8;
+    --green-deep: #167d73;
+    --green-tint: #142b2c;
+    --green-edge: #2a4f4b;
+    --amber: #e08a3c;
+    --amber-tint: #2a1f16;
+    --amber-edge: #4d3520;
+    --gold: #d3a04a;
+    --gold-tint: #262017;
+    --gold-edge: #4a3d22;
+    --slate: #94a3b8;
+    --slate-tint: #1b2327;
+    --slate-edge: #33414a;
+    --shadow: #0208090f;
+    --shadow-strong: #02080926;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  a { color: var(--green); }
+  a:hover { color: var(--green-deep); }
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  .wrap { margin: 0 auto; max-width: 1180px; padding: 40px 28px 80px; }
+
+  .kicker {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+    font-size: clamp(30px, 4.4vw, 42px);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+    margin: 8px 0 10px;
+    text-wrap: balance;
+  }
+
+  h2 {
+    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+    font-size: 25px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+
+  .lede { color: var(--muted); font-size: 16px; max-width: 62ch; }
+  .note { color: var(--muted); font-size: 13.5px; line-height: 1.55; max-width: 66ch; }
+
+  section { border-top: 1px solid var(--line); margin-top: 52px; padding-top: 30px; }
+  .section-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 26px; }
+
+  .grid-2 { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-4 { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-6 { display: grid; gap: 12px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  @media (max-width: 860px) {
+    .grid-2, .grid-4 { grid-template-columns: 1fr; }
+    .grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    box-shadow: 0 1px 1px var(--shadow), 0 11px 30px var(--shadow);
+    padding: 24px 26px;
+  }
+
+  .label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mark-row { align-items: center; display: flex; gap: 12px; margin: 18px 0 20px; }
+  .wordmark { font-size: 21px; font-weight: 700; letter-spacing: -0.035em; }
+  .variants { align-items: center; display: flex; gap: 10px; margin-bottom: 16px; }
+  .tradeoff { color: var(--amber); font-size: 12px; line-height: 1.45; margin-top: 8px; }
+  .rationale { font-size: 13px; line-height: 1.5; }
+
+  .swatch { border-radius: 10px; height: 52px; }
+  .swatch-name { font-size: 11.5px; font-weight: 650; margin-top: 7px; }
+  .swatch-hex { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  .ramp-row { align-items: baseline; display: flex; gap: 18px; }
+  .ramp-label { color: var(--muted); flex: 0 0 150px; font-size: 11px; }
+  .figure {
+    font-family: 'Newsreader', Georgia, serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .urgency { border-radius: 10px; padding: 12px 14px; }
+  .urgency-name { font-size: 10.5px; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; }
+  .urgency-span { font-size: 12.5px; margin-top: 5px; }
+
+  .btn { border-radius: 10px; font-size: 13px; font-weight: 650; padding: 8px 15px; }
+  .chip { border-radius: 999px; font-size: 11.5px; font-weight: 700; padding: 4px 11px; }
+  .badge {
+    align-items: center;
+    background: var(--slate-tint);
+    border: 1px solid var(--slate-edge);
+    border-radius: 6px;
+    color: var(--slate);
+    display: inline-flex;
+    font-size: 10px;
+    font-weight: 700;
+    gap: 5px;
+    letter-spacing: 0.03em;
+    padding: 3px 8px;
+    text-transform: uppercase;
+  }
+
+  /* The workspace mockup is a picture of the light theme, so it keeps its own
+     fixed palette in both page themes — like a screenshot would. */
+  .mock-frame {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow-x: auto;
+    padding: 14px;
+  }
+  .mock { background: #f5f4ee; border-radius: 10px; color: #12383c; padding: 19px 24px; width: 1360px; }
+  .mock .m-muted { color: #69746f; }
+  .mock .m-green { color: #0f766e; }
+
+  .recommend {
+    background: var(--green-tint);
+    border: 1px solid var(--green-edge);
+    border-radius: 13px;
+    font-size: 14px;
+    line-height: 1.55;
+    margin-top: 24px;
+    padding: 16px 18px;
+  }
+  .recommend strong { color: var(--green-deep); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .recommend strong { color: var(--green); }
+  }
+  :root[data-theme="dark"] .recommend strong { color: var(--green); }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Design proposal</div>
+    <h1>PlanPerm visual refresh</h1>
+    <p class="lede">Four logo directions, a display-face swap, and a colour scale for deadlines — built on the tokens already in <code>app.py</code>, so nothing here needs a rebuild.</p>
+    <p class="note" style="margin-top: 14px">Matched to the live app: DM Sans, <code>#0f766e</code> green, <code>#12383c</code> ink, 17px metric radii, 10px buttons, the 1.15&thinsp;/&thinsp;3.25&thinsp;/&thinsp;1.35 column split. Three things change; everything else stays where it is.</p>
+  </header>
+
+  <!-- ── Logo directions ─────────────────────────────────────────── -->
+  <section>
+    <div class="section-head">
+      <div class="kicker">01 · Identity</div>
+      <h2>Four marks</h2>
+      <p class="note">The current mark is a teal rounded square with a white tick — the default SaaS checkmark. Each of these trades on something the product actually does.</p>
+    </div>
+
+    <div class="grid-2">
+
+      <div class="panel">
+        <div class="label">Option A · Plot boundary</div>
+        <div class="mark-row">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <path d="M4 9.5 L20 4 L30 11.5 L30 25 L14 30 L4 22.5 Z" stroke="var(--green)" stroke-width="2.1" stroke-linejoin="round"/>
+            <circle cx="20" cy="16.5" r="3.4" fill="var(--green)"/>
+          </svg>
+          <span class="wordmark">planperm</span>
+        </div>
+        <div class="variants">
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <path d="M4 9.5 L20 4 L30 11.5 L30 25 L14 30 L4 22.5 Z" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
+            <circle cx="20" cy="16.5" r="3.4" fill="var(--ink)"/>
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <rect width="34" height="34" rx="8" fill="var(--green)"/>
+            <path d="M8 11.5 L19 7 L27 13 L27 24 L15 28 L8 22 Z" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span class="note" style="font-size: 11.5px">Mono · reversed</span>
+        </div>
+        <p class="rationale">An irregular plot outline with the site marked inside it. Planning is fundamentally about parcels of land, and nobody in this market uses it.</p>
+        <p class="tradeoff">Tradeoff: the irregular shape needs care at 16px — those corners soften into mush in a browser tab.</p>
+      </div>
+
+      <div class="panel">
+        <div class="label">Option B · Watched area</div>
+        <div class="mark-row">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="12" height="12" rx="2" stroke="var(--green)" stroke-width="2"/>
+            <rect x="18.5" y="3.5" width="12" height="12" rx="2" stroke="var(--green)" stroke-width="2" opacity="0.35"/>
+            <rect x="3.5" y="18.5" width="12" height="12" rx="2" stroke="var(--green)" stroke-width="2" opacity="0.35"/>
+            <rect x="18.5" y="18.5" width="12" height="12" rx="2" fill="var(--green)"/>
+          </svg>
+          <span class="wordmark">planperm</span>
+        </div>
+        <div class="variants">
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="12" height="12" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+            <rect x="18.5" y="18.5" width="12" height="12" rx="2" fill="var(--ink)"/>
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <rect width="34" height="34" rx="8" fill="var(--green)"/>
+            <rect x="8" y="8" width="8.5" height="8.5" rx="1.6" stroke="#ffffff" stroke-width="1.9"/>
+            <rect x="18.5" y="18.5" width="8.5" height="8.5" rx="1.6" fill="#ffffff"/>
+          </svg>
+          <span class="note" style="font-size: 11.5px">Mono · reversed</span>
+        </div>
+        <p class="rationale">Four parcels, one filled. Reads as a map extract and as <em>this is the plot being watched</em> — which is exactly what the watch agent sells.</p>
+        <p class="tradeoff">Tradeoff: four-square grids are common in analytics branding. Distinctive in planning, not in software.</p>
+      </div>
+
+      <div class="panel">
+        <div class="label">Option C · Received stamp</div>
+        <div class="mark-row">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <circle cx="17" cy="17" r="13.3" stroke="var(--green)" stroke-width="2.1"/>
+            <circle cx="17" cy="17" r="9" stroke="var(--green)" stroke-width="1.2" opacity="0.45"/>
+            <path d="M17 10.5 L17 17 L21.5 19.5" stroke="var(--green)" stroke-width="2.1" stroke-linecap="round"/>
+          </svg>
+          <span class="wordmark">planperm</span>
+        </div>
+        <div class="variants">
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <circle cx="17" cy="17" r="13.3" stroke="var(--ink)" stroke-width="2.6"/>
+            <path d="M17 10.5 L17 17 L21.5 19.5" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <rect width="34" height="34" rx="8" fill="var(--green)"/>
+            <circle cx="17" cy="17" r="9.4" stroke="#ffffff" stroke-width="2"/>
+            <path d="M17 12 L17 17 L20.5 19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="note" style="font-size: 11.5px">Mono · reversed</span>
+        </div>
+        <p class="rationale">The date stamp a council applies on receipt — the moment your five-week observation window starts. Puts the deadline at the centre of the identity.</p>
+        <p class="tradeoff">Tradeoff: a clock face reads as "scheduling" to anyone who does not already know the domain.</p>
+      </div>
+
+      <div class="panel">
+        <div class="label">Option D · Wordmark only</div>
+        <div class="mark-row">
+          <span style="font-family: 'Newsreader', Georgia, serif; font-size: 27px; font-weight: 500; letter-spacing: -0.015em">planperm</span>
+          <span style="background: var(--green); border-radius: 50%; height: 5px; margin-left: -8px; width: 5px"></span>
+        </div>
+        <div class="variants">
+          <span style="font-family: 'Newsreader', Georgia, serif; font-size: 15px; font-weight: 500">planperm</span>
+          <span style="align-items: center; background: var(--green); border-radius: 8px; display: inline-flex; height: 20px; justify-content: center; width: 20px">
+            <span style="color: #fff; font-family: 'Newsreader', Georgia, serif; font-size: 13px; font-weight: 600">p</span>
+          </span>
+          <span class="note" style="font-size: 11.5px">Mono · favicon</span>
+        </div>
+        <p class="rationale">No mark at all. An editorial serif wordmark with one teal full stop — the register of a land registry or a law report, which is the authority this product is claiming.</p>
+        <p class="tradeoff">Tradeoff: nothing to use as an app icon or avatar except a single letter.</p>
+      </div>
+
+    </div>
+
+    <div class="recommend">
+      <strong>Recommendation — Option B.</strong>
+      It survives 16px, works reversed in a tile, and means the one thing no competitor is selling: a specific area under watch. Option D is the strongest typographically, and its <em>p</em> tile would pair with B's mark if you want both.
+    </div>
+  </section>
+
+  <!-- ── Type ────────────────────────────────────────────────────── -->
+  <section>
+    <div class="section-head">
+      <div class="kicker">02 · Typography</div>
+      <h2>Replace Fraunces</h2>
+      <p class="note">DM Sans stays for the interface — it is doing its job. The display face is the problem.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel" style="border-style: dashed">
+        <div class="label" style="color: var(--amber)">Now · Fraunces</div>
+        <div style="font-family: Georgia, serif; font-size: 40px; font-variant-numeric: tabular-nums; font-weight: 650; line-height: 1.05; margin-top: 14px">1,555</div>
+        <div class="note" style="font-size: 11.5px; margin: 4px 0 0">Applications</div>
+        <p class="rationale" style="margin-top: 16px">Fraunces has a wonky optical axis that reads friendly and faintly unserious. It is also on a very large share of sites generated this year, which is its own signal.</p>
+      </div>
+
+      <div class="panel" style="border-color: var(--green)">
+        <div class="label" style="color: var(--green)">Proposed · Newsreader</div>
+        <div class="figure" style="font-size: 40px; line-height: 1.05; margin-top: 14px">1,555</div>
+        <div class="note" style="font-size: 11.5px; margin: 4px 0 0">Applications</div>
+        <p class="rationale" style="margin-top: 16px">Newsreader is an editorial face built for reported figures, with tabular numerals so columns of dates and counts line up. It carries the register of a law report — the authority this product is claiming.</p>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: 18px">
+      <div class="label">The ramp</div>
+      <div style="display: flex; flex-direction: column; gap: 13px; margin-top: 16px">
+        <div class="ramp-row">
+          <span class="ramp-label">Display · Newsreader 500</span>
+          <span style="font-family: 'Newsreader', Georgia, serif; font-size: 26px; font-weight: 500">Athlone, Co. Westmeath</span>
+        </div>
+        <div class="ramp-row">
+          <span class="ramp-label">Figure · Newsreader tnum</span>
+          <span class="figure" style="font-size: 23px">84% · 525 · 04 Oct</span>
+        </div>
+        <div class="ramp-row">
+          <span class="ramp-label">Body · DM Sans 400/15</span>
+          <span style="font-size: 15px">Observations close 4 October — in 23 days.</span>
+        </div>
+        <div class="ramp-row">
+          <span class="ramp-label">Small · DM Sans 400/12.5</span>
+          <span class="note" style="font-size: 12.5px">Estimated from the printed receipt date. Confirm with the authority.</span>
+        </div>
+        <div class="ramp-row">
+          <span class="ramp-label">Kicker · 800/11/.14em</span>
+          <span class="kicker">Monitor change</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Colour ──────────────────────────────────────────────────── -->
+  <section>
+    <div class="section-head">
+      <div class="kicker">03 · Colour</div>
+      <h2>Give deadlines their own scale</h2>
+      <p class="note">Amber currently means both "warning" and "refused". Splitting it means a closing deadline can never be mistaken for a refusal.</p>
+    </div>
+
+    <div class="panel">
+      <div class="label">Your tokens · unchanged</div>
+      <div class="grid-6" style="margin: 16px 0 26px">
+        <div><div class="swatch" style="background: #12383c"></div><div class="swatch-name">Ink</div><div class="swatch-hex">#12383c</div></div>
+        <div><div class="swatch" style="background: #0f766e"></div><div class="swatch-name">Green</div><div class="swatch-hex">#0f766e</div></div>
+        <div><div class="swatch" style="background: #0b5c56"></div><div class="swatch-name">Green deep</div><div class="swatch-hex">#0b5c56</div></div>
+        <div><div class="swatch" style="background: #f5f4ee; border: 1px solid var(--line)"></div><div class="swatch-name">Paper</div><div class="swatch-hex">#f5f4ee</div></div>
+        <div><div class="swatch" style="background: #edf4f0; border: 1px solid var(--line)"></div><div class="swatch-name">Soft</div><div class="swatch-hex">#edf4f0</div></div>
+        <div><div class="swatch" style="background: #69746f"></div><div class="swatch-name">Muted</div><div class="swatch-hex">#69746f</div></div>
+      </div>
+
+      <div class="label">Deadline urgency · new</div>
+      <div class="grid-4" style="margin-top: 14px">
+        <div class="urgency" style="background: var(--green-tint); border: 1px solid var(--green-edge); border-left: 3px solid var(--green)">
+          <div class="urgency-name" style="color: var(--green)">Open</div>
+          <div class="urgency-span">More than 14 days</div>
+        </div>
+        <div class="urgency" style="background: var(--gold-tint); border: 1px solid var(--gold-edge); border-left: 3px solid var(--gold)">
+          <div class="urgency-name" style="color: var(--gold)">Closing</div>
+          <div class="urgency-span">8 to 14 days</div>
+        </div>
+        <div class="urgency" style="background: var(--amber-tint); border: 1px solid var(--amber-edge); border-left: 3px solid var(--amber)">
+          <div class="urgency-name" style="color: var(--amber)">Urgent</div>
+          <div class="urgency-span">7 days or fewer</div>
+        </div>
+        <div class="urgency" style="background: var(--slate-tint); border: 1px solid var(--slate-edge); border-left: 3px solid var(--slate)">
+          <div class="urgency-name" style="color: var(--slate)">Closed</div>
+          <div class="urgency-span">Window has passed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: 18px">
+      <div class="label">Components · same geometry, clearer states</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; margin-top: 18px">
+        <div>
+          <div class="note" style="font-size: 11px; margin-bottom: 9px">Buttons · 10px radius</div>
+          <div style="display: flex; gap: 9px">
+            <span class="btn" style="background: var(--green-deep); color: #fff">Scan for changes</span>
+            <span class="btn" style="background: var(--surface); border: 1px solid var(--line)">Find site</span>
+          </div>
+        </div>
+        <div>
+          <div class="note" style="font-size: 11px; margin-bottom: 9px">Decision chips</div>
+          <div style="display: flex; gap: 7px">
+            <span class="chip" style="background: var(--green-tint); color: var(--green)">Granted</span>
+            <span class="chip" style="background: var(--amber-tint); color: var(--amber)">Refused</span>
+            <span class="chip" style="background: var(--gold-tint); color: var(--gold)">Pending</span>
+          </div>
+        </div>
+        <div>
+          <div class="note" style="font-size: 11px; margin-bottom: 9px">Estimate badge · new</div>
+          <span class="badge">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.6" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 5.2 L8 8.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="8" cy="10.9" r="0.85" fill="currentColor"/>
+            </svg>
+            Estimated
+          </span>
+        </div>
+      </div>
+      <p class="note" style="margin-top: 20px">Every derived date carries the estimate badge. Smallest change here, biggest effect on trust: a reader can tell at a glance which figures came from the council and which came from arithmetic.</p>
+    </div>
+  </section>
+
+  <!-- ── Workspace ───────────────────────────────────────────────── -->
+  <section>
+    <div class="section-head">
+      <div class="kicker">04 · Applied</div>
+      <h2>The workspace, refreshed</h2>
+      <p class="note">Option B's mark, Newsreader on the figures, the urgency scale on deadlines, and a type-led hero in place of the stock photograph. Same three-column split, same radii, same controls.</p>
+    </div>
+
+    <div class="mock-frame">
+      <div class="mock">
+
+        <div style="align-items: center; display: flex; justify-content: space-between; margin-bottom: 14px">
+          <div style="align-items: center; display: flex; gap: 9px">
+            <svg width="20" height="20" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+              <rect x="3.5" y="3.5" width="12" height="12" rx="2" stroke="#0f766e" stroke-width="2.4"/>
+              <rect x="18.5" y="3.5" width="12" height="12" rx="2" stroke="#0f766e" stroke-width="2.4" opacity="0.32"/>
+              <rect x="3.5" y="18.5" width="12" height="12" rx="2" stroke="#0f766e" stroke-width="2.4" opacity="0.32"/>
+              <rect x="18.5" y="18.5" width="12" height="12" rx="2" fill="#0f766e"/>
+            </svg>
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.035em">planperm</span>
+            <span class="m-muted" style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase">Planning intelligence</span>
+          </div>
+          <div style="align-items: center; display: flex; gap: 8px">
+            <span class="m-muted" style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase">Dark</span>
+            <span style="background: #dce1da; border-radius: 999px; display: inline-block; height: 18px; position: relative; width: 34px">
+              <span style="background: #fffefb; border-radius: 50%; height: 14px; left: 2px; position: absolute; top: 2px; width: 14px"></span>
+            </span>
+          </div>
+        </div>
+
+        <div style="background: linear-gradient(122deg, #fffefb 0%, #fffefb 52%, #edf4f0 100%); border: 1px solid #dce1da; border-radius: 20px; margin-bottom: 15px; overflow: hidden; padding: 18px 24px; position: relative">
+          <svg width="250" height="130" viewBox="0 0 250 130" fill="none" style="opacity: 0.5; position: absolute; right: 18px; top: 0" aria-hidden="true">
+            <path d="M18 106 L62 74 L108 92 L150 44 L196 60 L238 22" stroke="#0f766e" stroke-width="1.6" opacity="0.4"/>
+            <rect x="52" y="66" width="16" height="16" rx="2" stroke="#0f766e" stroke-width="1.3" opacity="0.5"/>
+            <rect x="142" y="36" width="16" height="16" rx="2" fill="#0f766e" opacity="0.18"/>
+            <rect x="188" y="52" width="16" height="16" rx="2" stroke="#0f766e" stroke-width="1.3" opacity="0.5"/>
+          </svg>
+          <div style="position: relative">
+            <div class="m-green" style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase">Local planning intelligence</div>
+            <div style="font-family: 'Newsreader', Georgia, serif; font-size: 25px; font-weight: 500; letter-spacing: -0.012em; margin-top: 3px">Athlone, Co. Westmeath</div>
+            <div class="m-muted" style="font-size: 12.5px; margin-top: 3px">Live planning records within 2 km, and the official weekly lists under watch.</div>
+
+            <div style="display: flex; gap: 9px; margin-top: 13px; max-width: 620px">
+              <div style="background: #fffefbd9; border: 1px solid #e4e9e1; border-radius: 11px; flex: 1; padding: 8px 11px">
+                <div class="figure" style="font-size: 23px; line-height: 1.1">525</div>
+                <span class="m-muted" style="display: block; font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase">Applications</span>
+              </div>
+              <div style="background: #fffefbd9; border: 1px solid #e4e9e1; border-radius: 11px; flex: 1; padding: 8px 11px">
+                <div class="figure" style="font-size: 23px; line-height: 1.1">84%</div>
+                <span class="m-muted" style="display: block; font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase">Approval rate</span>
+              </div>
+              <div style="background: #fffefbd9; border: 1px solid #e4e9e1; border-radius: 11px; flex: 1; padding: 8px 11px">
+                <div class="figure" style="font-size: 23px; line-height: 1.1">61</div>
+                <span class="m-muted" style="display: block; font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase">Refused</span>
+              </div>
+              <div style="background: #fdefe4; border: 1px solid #f0d3bb; border-radius: 11px; flex: 1; padding: 8px 11px">
+                <div class="figure" style="color: #b45309; font-size: 23px; line-height: 1.1">23</div>
+                <span style="color: #b45309; display: block; font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase">Days to observe</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 18px">
+
+          <div style="width: 226px">
+            <div class="m-green" style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase">Search</div>
+            <div class="m-muted" style="background: #fffefb; border: 1px solid #dce1da; border-radius: 10px; font-size: 12.5px; margin-top: 7px; padding: 8px 11px">Town or address</div>
+            <div style="background: #0b5c56; border-radius: 10px; color: #fff; font-size: 12.5px; font-weight: 650; margin-top: 7px; padding: 8px 0; text-align: center">Find site</div>
+
+            <div style="background: #dce1da; height: 1px; margin: 15px 0"></div>
+
+            <div class="m-green" style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase">Radius</div>
+            <div style="align-items: center; display: flex; gap: 8px; margin-top: 12px">
+              <span style="background: #dce1da; border-radius: 999px; display: block; flex: 1; height: 3px; position: relative">
+                <span style="background: #0f766e; border-radius: 999px; display: block; height: 3px; width: 46%"></span>
+                <span style="background: #0b5c56; border: 2px solid #fffefb; border-radius: 50%; height: 13px; left: 43%; position: absolute; top: -5px; width: 13px"></span>
+              </span>
+              <span style="font-size: 11.5px; font-weight: 650">2 km</span>
+            </div>
+
+            <div style="background: #dce1da; height: 1px; margin: 15px 0"></div>
+
+            <div class="m-green" style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase">Monitor change</div>
+            <div style="align-items: center; display: flex; gap: 6px; margin-top: 9px">
+              <span style="background: #0f766e; border-radius: 50%; box-shadow: 0 0 0 3px #0f766e22; display: block; height: 6px; width: 6px"></span>
+              <span style="color: #31534c; font-size: 11.5px">Westmeath County Council</span>
+            </div>
+            <div class="m-muted" style="font-size: 11px; margin-top: 3px">3 sources · scanned 2 h ago</div>
+            <div style="background: #0b5c56; border-radius: 10px; color: #fff; font-size: 12.5px; font-weight: 650; margin-top: 10px; padding: 8px 0; text-align: center">Scan for changes</div>
+            <div style="align-items: center; background: #edf4f0; border: 1px solid #cfe0d8; border-radius: 9px; display: flex; gap: 6px; margin-top: 9px; padding: 7px 9px">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.6" stroke="#0f766e" stroke-width="1.6"/>
+                <path d="M5.4 8.2 L7.2 10 L10.6 6.2" stroke="#0f766e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="m-green" style="font-size: 11px; font-weight: 650">1 new change — below the map</span>
+            </div>
+          </div>
+
+          <div style="flex: 1">
+            <div style="align-items: center; display: flex; font-size: 11.5px; gap: 7px; margin-bottom: 7px">
+              <span style="background: #0f766e; border-radius: 50%; box-shadow: 0 0 0 3px #0f766e22; display: block; height: 6px; width: 6px"></span>
+              <span style="color: #31534c">Athlone, Co. Westmeath</span>
+              <span style="color: #dce1da">·</span>
+              <span style="color: #31534c">2 km radius</span>
+              <span style="color: #dce1da">·</span>
+              <span class="m-muted">525 records</span>
+            </div>
+
+            <div style="border-radius: 14px; overflow: hidden">
+              <svg width="100%" height="330" viewBox="0 0 700 330" fill="none" aria-hidden="true" style="display: block">
+                <rect width="700" height="330" fill="#e9ede5"/>
+                <path d="M0 210 C120 192 200 232 300 219 C420 204 520 238 700 217 L700 330 L0 330 Z" fill="#cfe0e6"/>
+                <path d="M-10 132 L240 108 L470 148 L710 122" stroke="#dfe3d8" stroke-width="14"/>
+                <path d="M120 -10 L156 168 L138 340" stroke="#dfe3d8" stroke-width="11"/>
+                <path d="M470 -10 L442 160 L478 340" stroke="#dfe3d8" stroke-width="9"/>
+                <circle cx="352" cy="156" r="88" fill="#0f766e" fill-opacity="0.055" stroke="#0f766e" stroke-opacity="0.3" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <circle cx="228" cy="118" r="5.5" fill="#0f766e"/>
+                <circle cx="288" cy="190" r="5.5" fill="#0f766e"/>
+                <circle cx="404" cy="106" r="5.5" fill="#b45309"/>
+                <circle cx="428" cy="204" r="5.5" fill="#0f766e"/>
+                <circle cx="318" cy="228" r="5.5" fill="#b7791f"/>
+                <circle cx="260" cy="156" r="5.5" fill="#0f766e"/>
+                <circle cx="392" cy="174" r="5.5" fill="#b7791f"/>
+                <circle cx="352" cy="100" r="5.5" fill="#0f766e"/>
+                <circle cx="462" cy="146" r="5.5" fill="#0f766e"/>
+                <circle cx="208" cy="204" r="5.5" fill="#b45309"/>
+                <path d="M352 174 C352 174 340 158 340 148 A12 12 0 1 1 364 148 C364 158 352 174 352 174 Z" fill="#0b5c56"/>
+                <circle cx="352" cy="147" r="4.2" fill="#ffffff"/>
+              </svg>
+            </div>
+
+            <div style="background: #fffefb; border: 1px solid #dce1da; border-radius: 13px; margin-top: 13px; padding: 13px 16px">
+              <div style="align-items: center; display: flex; gap: 9px; justify-content: space-between">
+                <div style="align-items: center; display: flex; gap: 9px">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M4.5 6 L8 9.5 L11.5 6" stroke="#12383c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span style="font-size: 13px; font-weight: 650">Monitor change — Athlone</span>
+                  <span style="background: #fdefe4; border-radius: 999px; color: #b45309; font-size: 10.5px; font-weight: 700; padding: 2px 9px">1 detected change</span>
+                </div>
+                <span class="m-muted" style="font-size: 11px">15 applications · earliest 4 Oct</span>
+              </div>
+
+              <div style="background: #dce1da; height: 1px; margin: 12px 0"></div>
+
+              <div style="display: flex; gap: 10px">
+                <div style="background: #fdefe4; border: 1px solid #f0d3bb; border-left: 3px solid #b45309; border-radius: 10px; flex: 1; padding: 10px 12px">
+                  <div style="align-items: center; display: flex; gap: 7px">
+                    <span style="font-size: 12px; font-weight: 700">26/60461</span>
+                    <span style="background: #f3f3f1; border: 1px solid #dcdedb; border-radius: 5px; color: #64748b; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; padding: 1px 5px; text-transform: uppercase">Estimated</span>
+                  </div>
+                  <div style="font-size: 11.5px; line-height: 1.4; margin-top: 4px">Part single-storey / part two-storey dwelling with garage</div>
+                  <div class="m-muted" style="font-size: 10.5px; margin-top: 3px">Clonarney, Delvin, Co. Westmeath</div>
+                  <div class="figure" style="color: #b45309; font-size: 13px; margin-top: 6px">Observations close 4 Oct · 23 days</div>
+                </div>
+
+                <div style="background: #edf4f0; border: 1px solid #cfe0d8; border-left: 3px solid #0f766e; border-radius: 10px; flex: 1; padding: 10px 12px">
+                  <div style="align-items: center; display: flex; gap: 7px">
+                    <span style="font-size: 12px; font-weight: 700">26/60463</span>
+                    <span style="background: #f3f3f1; border: 1px solid #dcdedb; border-radius: 5px; color: #64748b; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; padding: 1px 5px; text-transform: uppercase">Estimated</span>
+                  </div>
+                  <div style="font-size: 11.5px; line-height: 1.4; margin-top: 4px">Dwelling house plus domestic sewage treatment system</div>
+                  <div class="m-muted" style="font-size: 10.5px; margin-top: 3px">Bog Road, Coosan, Athlone</div>
+                  <div class="figure" style="color: #0f766e; font-size: 13px; margin-top: 6px">Observations close 5 Oct · 24 days</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="width: 268px">
+            <div style="background: linear-gradient(160deg, #fffefb, #f0f5ef); border: 1px solid #dce1da; border-radius: 16px; display: flex; flex-direction: column; height: 519px; padding: 15px">
+              <div style="align-items: center; display: flex; gap: 9px; margin-bottom: 10px">
+                <span style="align-items: center; background: #0f766e; border-radius: 9px; display: flex; height: 30px; justify-content: center; width: 30px">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M10 3 L11.6 8.4 L17 10 L11.6 11.6 L10 17 L8.4 11.6 L3 10 L8.4 8.4 Z" fill="#ffffff"/>
+                  </svg>
+                </span>
+                <div>
+                  <div style="font-size: 13px; font-weight: 750; letter-spacing: -0.015em">PlanPerm assistant</div>
+                  <div class="m-muted" style="font-size: 10.5px">Athlone, Co. Westmeath</div>
+                </div>
+              </div>
+
+              <div class="m-muted" style="align-items: center; display: flex; font-size: 10.5px; gap: 5px; margin-bottom: 11px">
+                <span style="background: #0f766e; border-radius: 50%; display: block; height: 5px; width: 5px"></span>
+                <span>3 agents ready · gpt-4o-mini</span>
+              </div>
+
+              <div style="flex: 1">
+                <div style="background: #f0f5ef; border: 1px solid #dce1da; border-radius: 11px; margin-bottom: 9px; padding: 9px 11px">
+                  <div style="font-size: 11.5px; line-height: 1.45">What are the observation deadlines near me?</div>
+                </div>
+                <div style="background: #fffefb; border: 1px solid #dce1da; border-radius: 11px; padding: 9px 11px">
+                  <div style="align-items: center; display: flex; gap: 5px; margin-bottom: 6px">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <rect x="2" y="2" width="5.4" height="5.4" rx="1" stroke="#0f766e" stroke-width="1.5"/>
+                      <rect x="8.6" y="8.6" width="5.4" height="5.4" rx="1" fill="#0f766e"/>
+                    </svg>
+                    <span class="m-green" style="font-size: 9.5px; font-weight: 750; letter-spacing: 0.05em; text-transform: uppercase">Watch agent</span>
+                  </div>
+                  <div style="font-size: 11.5px; line-height: 1.5">15 applications were published in the Westmeath weekly list for the week to 6 September. The earliest observation window closes <span style="color: #b45309; font-weight: 650">4 October</span>, 23 days from today.</div>
+                  <div class="m-muted" style="font-size: 10.5px; line-height: 1.45; margin-top: 7px">Estimated from the printed receipt date. Confirm with the authority before relying on it.</div>
+                </div>
+              </div>
+
+              <div style="align-items: center; background: #fffefb; border: 1px solid #dce1da; border-radius: 11px; display: flex; justify-content: space-between; margin-top: 9px; padding: 8px 11px">
+                <span class="m-muted" style="font-size: 11.5px">Ask PlanPerm</span>
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 10 L16 10 M11 5 L16 10 L11 15" stroke="#0f766e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top: 18px">The mockup is fixed to the light theme, the way a screenshot would be — this page's own chrome follows your system setting, so you can check both.</p>
+  </section>
+
+  <!-- ── What it costs ───────────────────────────────────────────── -->
+  <section>
+    <div class="section-head">
+      <div class="kicker">05 · Effort</div>
+      <h2>What each change costs</h2>
+    </div>
+
+    <div class="panel">
+      <div style="display: flex; flex-direction: column; gap: 0">
+        <div style="align-items: baseline; border-bottom: 1px solid var(--line); display: flex; gap: 18px; padding: 12px 0">
+          <span style="flex: 0 0 190px; font-size: 13.5px; font-weight: 650">Swap the display face</span>
+          <span class="note" style="flex: 1; font-size: 13px">Two lines: the Google Fonts <code>@import</code> and the <code>font-family</code> on <code>stMetricValue</code> / <code>.hero-stat strong</code>.</span>
+          <span class="chip" style="background: var(--green-tint); color: var(--green); flex: 0 0 auto">Minutes</span>
+        </div>
+        <div style="align-items: baseline; border-bottom: 1px solid var(--line); display: flex; gap: 18px; padding: 12px 0">
+          <span style="flex: 0 0 190px; font-size: 13.5px; font-weight: 650">New logo mark</span>
+          <span class="note" style="flex: 1; font-size: 13px">Replaces the <code>.brand-mark</code> CSS pseudo-element with inline SVG. Also gives you a favicon, which the app currently lacks.</span>
+          <span class="chip" style="background: var(--green-tint); color: var(--green); flex: 0 0 auto">Minutes</span>
+        </div>
+        <div style="align-items: baseline; border-bottom: 1px solid var(--line); display: flex; gap: 18px; padding: 12px 0">
+          <span style="flex: 0 0 190px; font-size: 13.5px; font-weight: 650">Deadline urgency scale</span>
+          <span class="note" style="flex: 1; font-size: 13px">Four token triples, then keying the alert cards off <code>days_left</code> — which <code>core/weekly_list.py</code> already computes.</span>
+          <span class="chip" style="background: var(--gold-tint); color: var(--gold); flex: 0 0 auto">An hour</span>
+        </div>
+        <div style="align-items: baseline; border-bottom: 1px solid var(--line); display: flex; gap: 18px; padding: 12px 0">
+          <span style="flex: 0 0 190px; font-size: 13.5px; font-weight: 650">Estimate badge</span>
+          <span class="note" style="flex: 1; font-size: 13px">One small component, used wherever a derived date appears. The clearest trust signal for the cost.</span>
+          <span class="chip" style="background: var(--gold-tint); color: var(--gold); flex: 0 0 auto">An hour</span>
+        </div>
+        <div style="align-items: baseline; display: flex; gap: 18px; padding: 12px 0">
+          <span style="flex: 0 0 190px; font-size: 13.5px; font-weight: 650">Type-led hero</span>
+          <span class="note" style="flex: 1; font-size: 13px">Drops <code>HERO_IMAGE</code> for a gradient and a small plot diagram. Removes a remote image dependency, and the page stops depending on a stock photo for its character.</span>
+          <span class="chip" style="background: var(--gold-tint); color: var(--gold); flex: 0 0 auto">An hour</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>

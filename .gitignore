@@ -112,3 +112,14 @@ temp/
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
 .project-config.json
+
+# Local state, never committed.
+# watch_data holds watched locations - personal preferences the watch agent
+# promises stay on the machine. data/ is the planning API response cache.
+watch_data/
+data/
+
+# Compiled bytecode. Committing __pycache__ is how core/*.py and views/*.py
+# came to exist on this branch only as .pyc with no source.
+__pycache__/
+*.pyc
