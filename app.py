@@ -129,6 +129,14 @@ def apply_theme(dark_mode: bool) -> None:
           .st-key-assistant_card [data-testid="stChatInput"], .st-key-assistant_card [data-testid="stChatInput"] div, .st-key-assistant_card [data-testid="stChatInput"] textarea { background:var(--composer) !important; border-color:var(--line) !important; }
           .st-key-assistant_card [data-testid="stChatInput"] button { background:transparent !important; }
           .st-key-assistant_card [data-testid="stChatInput"] { margin-top:.35rem; }
+          /* Magnify control. Sits in the card header and toggles the overlay
+             below. Styled as a quiet icon button so it reads as chrome rather
+             than a primary action. */
+          .st-key-assistant_magnify button { align-items:center; background:transparent !important; border:1px solid var(--line) !important; border-radius:9px !important; color:var(--muted) !important; display:flex !important; font-size:.92rem !important; height:2rem !important; justify-content:center; min-height:2rem !important; padding:0 !important; transition:background 140ms ease, color 140ms ease, transform 140ms ease; width:2rem !important; }
+          .st-key-assistant_magnify button:hover { background:var(--soft) !important; color:var(--ink) !important; transform:none !important; }
+          .st-key-assistant_magnify button p { font-size:.92rem !important; line-height:1 !important; margin:0 !important; }
+          @keyframes assistantZoomIn { from { opacity:0; transform:translate(-50%,-50%) scale(.965); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+          @keyframes assistantFadeIn { from { opacity:0; } to { opacity:1; } }
           .section-rule { background:var(--line); height:1px; margin:1rem 0; width:100%; }
           .deadline { align-items:baseline; border-radius:9px; display:flex; flex-wrap:wrap; font-size:.82rem; gap:.4rem; margin:.35rem 0 0; padding:.42rem .6rem; }
           .deadline .when { font-family:'Newsreader', Georgia, serif; font-size:.95rem; font-variant-numeric:tabular-nums; font-weight:500; }
@@ -167,6 +175,51 @@ def apply_theme(dark_mode: bool) -> None:
     )
 
 
+# Applied only while the assistant is magnified. Injected conditionally rather
+# than toggled via a body class, because Streamlit gives us no hook to set one.
+# The card is lifted out of its narrow column and centred over the workspace,
+# which is what makes long advisor replies readable - the column is ~23% wide,
+# so a 600-word answer wraps into a very tall ribbon.
+ASSISTANT_EXPANDED_CSS = """
+<style>
+  .assistant-backdrop { background:rgba(8,20,22,.46); inset:0; position:fixed; z-index:999; }
+  .st-key-assistant_card {
+    height:min(880px, 88vh) !important;
+    left:50%; top:50%;
+    position:fixed !important;
+    transform:translate(-50%,-50%);
+    width:min(1080px, 94vw) !important;
+    z-index:1000;
+    box-shadow:0 30px 80px rgba(0,0,0,.34) !important;
+  }
+  /* The history pane carries an inline height from st.container(height=...).
+     Release it so the flex column decides, letting the pane absorb the extra
+     vertical space instead of scrolling inside a short box. */
+  .st-key-assistant_history { height:auto !important; max-height:none !important; }
+  /* Long-form answers only. Caps the measure so text does not run the full
+     1080px, which is past comfortable reading length. */
+  .st-key-assistant_card [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] { max-width:78ch; }
+</style>
+"""
+
+# Zoom/fade is emitted only on the rerun that follows a toggle. Injecting it on
+# every rerun would replay the animation each time a chat message arrives.
+ASSISTANT_ANIMATION_CSS = """
+<style>
+  .assistant-backdrop { animation:assistantFadeIn 200ms ease; }
+  .st-key-assistant_card { animation:assistantZoomIn 240ms cubic-bezier(.4,0,.2,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .assistant-backdrop, .st-key-assistant_card { animation:none !important; }
+  }
+</style>
+"""
+
+
+def toggle_assistant_size() -> None:
+    st.session_state.assistant_expanded = not st.session_state.get("assistant_expanded", False)
+    st.session_state.assistant_animate = True
+
+
 def ensure_state() -> None:
     if "site" not in st.session_state:
         st.session_state.site = DEFAULT_SITE.copy()
@@ -178,6 +231,8 @@ def ensure_state() -> None:
         st.session_state.search_error = ""
     if "workspace_id" not in st.session_state:
         st.session_state.workspace_id = None
+    if "assistant_expanded" not in st.session_state:
+        st.session_state.assistant_expanded = False
 
 
 def set_site(lat: float, lon: float, label: str) -> None:
@@ -296,15 +351,28 @@ def build_map(site: dict[str, Any], applications: list[dict[str, Any]], radius_k
 
 def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], radius_km: float) -> None:
     site_label = str(site["label"])
+    expanded = bool(st.session_state.get("assistant_expanded", False))
+    header_column, action_column = st.columns([1, 0.2], vertical_alignment="center")
+    with header_column:
+        st.markdown(
+            f"""
+            <div class='assistant-anchor'></div>
+            <div class='assistant-header'>
+              <div class='assistant-glyph'>✦</div>
+              <div><div class='assistant-title'>PlanPerm assistant</div><div class='assistant-subtitle'>{safe_text(site_label)}</div></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with action_column:
+        st.button(
+            "⤡" if expanded else "⤢",
+            key="assistant_magnify",
+            help="Shrink back into the column" if expanded else "Magnify for long replies",
+            on_click=toggle_assistant_size,
+        )
     st.markdown(
-        f"""
-        <div class='assistant-anchor'></div>
-        <div class='assistant-header'>
-          <div class='assistant-glyph'>✦</div>
-          <div><div class='assistant-title'>PlanPerm assistant</div><div class='assistant-subtitle'>{safe_text(site_label)}</div></div>
-        </div>
-        <div class='assistant-ready'>Planning context ready</div>
-        """,
+        "<div class='assistant-ready'>Planning context ready</div>",
         unsafe_allow_html=True,
     )
     uploaded_draft = st.file_uploader(
@@ -313,7 +381,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
         key="draft_pdf_upload",
     )
     pdf_path = save_uploaded_draft(uploaded_draft)
-    history = st.container(height=330, border=False, key="assistant_history")
+    history = st.container(height=560 if expanded else 330, border=False, key="assistant_history")
     with history:
         if not st.session_state.messages:
             st.markdown("<div class='assistant-welcome'>Ask about the selected site, nearby decisions, or a planning record on the map.</div>", unsafe_allow_html=True)
@@ -503,6 +571,16 @@ with map_column:
             st.rerun()
 
 with assistant_column:
+    # Both must sit outside the card: the backdrop needs to paint beneath it,
+    # and a child element cannot render below its own parent's background.
+    if st.session_state.get("assistant_expanded"):
+        animation = ASSISTANT_ANIMATION_CSS if st.session_state.pop("assistant_animate", False) else ""
+        st.markdown(
+            ASSISTANT_EXPANDED_CSS + animation + "<div class='assistant-backdrop'></div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.session_state.pop("assistant_animate", None)
     with st.container(border=True, key="assistant_card"):
         assistant_panel(site, applications, radius_km)
 
