@@ -1,4 +1,4 @@
-"""LangGraph StateGraph — routes to advisor or draft_review based on input.
+"""LangGraph StateGraph — routes planning queries to existing specialists.
 
 Usage:
     from agents.graph import run
@@ -15,6 +15,15 @@ from langgraph.graph import END, StateGraph
 
 from agents.advisor import advisor_node
 from agents.draft_review import draft_review_node
+from agents.orchestrator import (
+    advisor_agent_node,
+    clarify_node,
+    coordinator_node,
+    draft_agent_node,
+    semantic_router_node,
+    specialist_route,
+    watch_agent_node,
+)
 
 
 class PlanningState(TypedDict, total=False):
@@ -26,6 +35,7 @@ class PlanningState(TypedDict, total=False):
     site_condition: str
     question: str
     pdf_path: str
+    site_label: str
     # Resolved
     jurisdiction: str
     authority: str
@@ -42,11 +52,15 @@ class PlanningState(TypedDict, total=False):
     advice: str
     draft_text: str
     draft_review: str
+    response: str
+    orchestrator: dict[str, Any]
     # Meta
     errors: list[str]
 
 
 def _route(state: PlanningState) -> str:
+    if state.get("question"):
+        return "semantic_router"
     if state.get("pdf_path"):
         return "draft_review"
     return "advisor"
@@ -55,9 +69,31 @@ def _route(state: PlanningState) -> str:
 _graph = StateGraph(PlanningState)
 _graph.add_node("advisor", advisor_node)
 _graph.add_node("draft_review", draft_review_node)
+_graph.add_node("semantic_router", semantic_router_node)
+_graph.add_node("routed_advisor", advisor_agent_node)
+_graph.add_node("routed_draft", draft_agent_node)
+_graph.add_node("watch", watch_agent_node)
+_graph.add_node("coordinator", coordinator_node)
+_graph.add_node("clarify", clarify_node)
 _graph.set_conditional_entry_point(_route)
+_graph.add_conditional_edges(
+    "semantic_router",
+    specialist_route,
+    {
+        "advisor": "routed_advisor",
+        "draft": "routed_draft",
+        "watch": "watch",
+        "coordinator": "coordinator",
+        "clarify": "clarify",
+    },
+)
 _graph.add_edge("advisor", END)
 _graph.add_edge("draft_review", END)
+_graph.add_edge("routed_advisor", END)
+_graph.add_edge("routed_draft", END)
+_graph.add_edge("watch", END)
+_graph.add_edge("coordinator", END)
+_graph.add_edge("clarify", END)
 
 graph = _graph.compile()
 

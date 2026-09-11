@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import tempfile
 from typing import Any
 
 import folium
@@ -10,6 +11,7 @@ import streamlit as st
 from folium.plugins import Draw
 from streamlit_folium import st_folium
 
+from agents.graph import run as run_planning_graph
 from geocoder import resolve_location
 from planning_data import fetch_nearby_applications, summarize_applications
 
@@ -143,6 +145,21 @@ def safe_text(value: Any) -> str:
     return html.escape(str(value or "—"))
 
 
+def save_uploaded_draft(uploaded_file: Any) -> str | None:
+    """Write an uploaded PDF to a temp file so the draft agent can read it."""
+    if uploaded_file is None:
+        st.session_state.pop("draft_pdf_path", None)
+        st.session_state.pop("draft_pdf_signature", None)
+        return None
+    signature = f"{uploaded_file.name}:{uploaded_file.size}"
+    if st.session_state.get("draft_pdf_signature") != signature:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(uploaded_file.getvalue())
+            st.session_state.draft_pdf_path = tmp.name
+        st.session_state.draft_pdf_signature = signature
+    return str(st.session_state.get("draft_pdf_path") or "") or None
+
+
 def application_popup(application: dict[str, Any]) -> str:
     source_url = str(application.get("link") or "")
     if not source_url.startswith(("https://", "http://")):
@@ -217,7 +234,8 @@ def build_map(site: dict[str, Any], applications: list[dict[str, Any]], radius_k
     return planning_map
 
 
-def assistant_panel(site_label: str) -> None:
+def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], radius_km: float) -> None:
+    site_label = str(site["label"])
     st.markdown(
         f"""
         <div class='assistant-anchor'></div>
@@ -229,7 +247,14 @@ def assistant_panel(site_label: str) -> None:
         """,
         unsafe_allow_html=True,
     )
-    with st.container(height=330, border=False, key="assistant_history"):
+    uploaded_draft = st.file_uploader(
+        "Draft PDF (optional — enables document review)",
+        type=["pdf"],
+        key="draft_pdf_upload",
+    )
+    pdf_path = save_uploaded_draft(uploaded_draft)
+    history = st.container(height=330, border=False, key="assistant_history")
+    with history:
         if not st.session_state.messages:
             st.markdown("<div class='assistant-welcome'>Ask about the selected site, nearby decisions, or a planning record on the map.</div>", unsafe_allow_html=True)
         for message in st.session_state.messages:
@@ -238,13 +263,26 @@ def assistant_panel(site_label: str) -> None:
 
     if prompt := st.chat_input("Ask PlanPerm", key="assistant_prompt"):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": "Chat UI is ready. Connect the PlanPerm AI service to answer with the selected site and nearby applications.",
-            }
-        )
-        st.rerun()
+        with history:
+            with st.chat_message("user"):
+                st.write(prompt)
+        with st.spinner("Finding the right planning specialist..."):
+            result = run_planning_graph(
+                question=prompt,
+                lat=float(site["lat"]),
+                lng=float(site["lon"]),
+                radius_km=radius_km,
+                site_label=site_label,
+                records=applications,
+                pdf_path=pdf_path,
+            )
+        decision = result.get("orchestrator", {})
+        answer = result.get("response", result.get("advice", "No response returned."))
+        content = f"**Routed to: {decision.get('route', 'advisor')}** ({decision.get('method', 'existing graph')})\n\n{answer}"
+        st.session_state.messages.append({"role": "assistant", "content": content})
+        with history:
+            with st.chat_message("assistant"):
+                st.write(content)
 
 
 ensure_state()
@@ -352,4 +390,4 @@ with map_column:
 
 with assistant_column:
     with st.container(border=True, key="assistant_card"):
-        assistant_panel(site["label"])
+        assistant_panel(site, applications, radius_km)
