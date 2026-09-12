@@ -17,14 +17,14 @@ class _BriefPDF(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 9)
         self.set_text_color(100, 120, 110)
-        self.cell(0, 6, "PlanPerm — Preparation Brief", align="R", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 6, _safe_text("PlanPerm - Preparation Brief"), align="R", new_x="LMARGIN", new_y="NEXT")
         self.ln(2)
 
     def footer(self):
         self.set_y(-15)
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(130, 140, 135)
-        self.cell(0, 8, f"Page {self.page_no()}/{{nb}}  |  Informational support only — not legal, planning, architectural, or financial advice.", align="C")
+        self.cell(0, 8, _safe_text(f"Page {self.page_no()}/{{nb}}  |  Informational support only - not legal, planning, architectural, or financial advice."), align="C")
 
 
 def _strip_md_links(text: str) -> str:
@@ -34,6 +34,42 @@ def _strip_md_links(text: str) -> str:
 
 def _strip_bold(text: str) -> str:
     return text.replace("**", "")
+
+
+def _safe_text(text: str) -> str:
+    """Replace characters that Helvetica can't render."""
+    replacements = {
+        "\u2014": "-",   # em dash
+        "\u2013": "-",   # en dash
+        "\u2018": "'",   # left single quote
+        "\u2019": "'",   # right single quote
+        "\u201c": '"',   # left double quote
+        "\u201d": '"',   # right double quote
+        "\u2026": "...", # ellipsis
+        "\u2022": "-",   # bullet
+        "\u00e9": "e",   # é
+        "\u00e1": "a",   # á
+        "\u00ed": "i",   # í
+        "\u00f3": "o",   # ó
+        "\u00fa": "u",   # ú
+        "\u00c9": "E",   # É
+        "\u00c1": "A",   # Á
+        "\u2610": "[ ]", # checkbox ☐
+        "\u2714": "[x]", # checkmark ✔
+        "\u2705": "[OK]",  # ✅
+        "\u274c": "[X]",   # ❌
+        "\u26a0\ufe0f": "[!]",  # ⚠️
+        "\u26a0": "[!]",  # ⚠
+        "\u2b07\ufe0f": "v",  # ⬇️
+        "\u2b07": "v",
+        "\u23f3": "[~]",  # ⏳
+        "\u21a9\ufe0f": "<-", # ↩️
+        "\u21a9": "<-",
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    # Strip any remaining non-latin1 characters
+    return text.encode("latin-1", errors="replace").decode("latin-1")
 
 
 def brief_to_pdf(markdown: str) -> bytes:
@@ -47,6 +83,9 @@ def brief_to_pdf(markdown: str) -> bytes:
 
     for raw_line in markdown.split("\n"):
         line = raw_line.rstrip()
+
+        # Sanitise for Helvetica compatibility
+        line = _safe_text(line)
 
         # Skip markdown-only formatting
         if line.strip() == "---":
