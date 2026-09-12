@@ -601,7 +601,7 @@ with controls_column:
                 ref = selected_record.split(" — ")[0]
                 record = next((a for a in applications if a["application_ref"] == ref), None)
                 if record:
-                    question = f"Tell me about planning record {ref} at {record.get('address', 'this location')}. It was {record['decision']}. How does it compare to what I might propose here?"
+                    question = f"Tell me about planning record {ref} at {record.get('address', 'this location')}. It was {record['decision']}. How does it compare to what I might propose here? Include the link to the original record so I can check the details."
                     st.session_state["prefill_question"] = question
                     st.rerun()
 
