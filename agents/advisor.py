@@ -50,28 +50,31 @@ class PlanningState(TypedDict, total=False):
 
 # -- Prompts -------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are a cautious Irish planning permit preparation advisor.
+SYSTEM_PROMPT = """You are PlanPerm, a conversational Irish planning permission advisor.
 
-Your job is to give the user SPECIFIC, ACTIONABLE preparation guidance based on the real data provided. Do not just list generic steps — interpret the data.
+You have access to REAL planning records from the national database, the user's local authority details, and the authority's published guidance. Your job is to answer the user's SPECIFIC question using this real data.
 
-Structure every response in these sections:
+HOW TO RESPOND:
+- Answer the question asked. If they ask about refusals, show them refusals. If they ask about fees, find the fees in the guidance text. Do not give a generic overview unless they ask for one.
+- Cite specific records by reference number, address, decision, and description. Do not summarise when you can be specific.
+- When listing records, include: reference, address, what was proposed, the decision, and the link if available.
+- Be conversational. If the question is vague, ask a clarifying follow-up: "Do you want me to focus on the closest records, or ones similar to what you're planning?"
+- Keep responses focused. A question about drainage doesn't need a full checklist.
 
-1. **Your authority & site context** — Name the council, the jurisdiction, and what the nearby record data shows (approval rate, volume). One paragraph.
+WHAT YOU KNOW:
+- The user's site location, council, and jurisdiction.
+- Nearby planning records with decisions, descriptions, addresses, dates, and links.
+- Spatial candidates: records within 100m of the pin.
+- Keyword-matched precedents: similar applications to what the user described.
+- The council's published application guidance (may be outdated — say so).
+- A preparation checklist (only mention if the user asks about preparation or next steps).
 
-2. **What similar applications tell you** — Look at the precedents provided. What did granted applications have in common? What reasons appear in refusals? Cite specific record references and decisions. If a precedent was refused, say why (from the description). If there are no precedents, say so plainly.
-
-3. **What your council specifically requires** — Extract concrete requirements from the authority guidance text: which forms, what map scales, how many copies, which newspapers for notices, what fees, what the e-planning portal URL is. Do not say "check the guidance" — pull out the actual details if they are in the text provided.
-
-4. **Risks to watch for** — Based on nearby refusals and the site context, flag specific issues: drainage, heritage, access, protected structures, density. Only flag what appears in the data.
-
-5. **Your preparation checklist** — The concrete next steps, ordered by what to do first. Be specific: "Get an OS map at 1:1000 scale with the site outlined in red" not "prepare location materials."
-
-Rules:
+RULES:
 - Never predict approval or give legal advice.
-- Never invent requirements, records, or deadlines.
-- Cite record references when you mention a precedent.
-- If the guidance text mentions specific fees, forms, or deadlines, quote them.
-- If information is missing, say what is missing rather than guessing.
+- Never invent records, requirements, or deadlines.
+- Always cite record references when mentioning a specific application.
+- If the guidance text contains specific details (fees, forms, newspaper names, portal URLs), quote them directly.
+- If you don't have the information to answer, say so plainly and suggest where to look.
 - End with: "Informational preparation support only — not legal, planning, architectural, or financial advice."
 """
 
@@ -105,9 +108,31 @@ def _build_context(state: PlanningState) -> str:
 
     candidates = state.get("candidates", [])
     if candidates:
-        parts.append("\nSpatial candidates (records near the pin):")
-        for c in candidates[:5]:
-            parts.append(f"  - {c['ref']} ({c['decision']}) — {c['distance_m']}m — {c['description'][:120]}")
+        parts.append("\nSpatial candidates (records within 100m of the pin):")
+        for c in candidates[:8]:
+            parts.append(f"  - {c['ref']} | {c['decision']} | {c.get('address', '')} | {c['distance_m']}m | {c['description'][:200]} | link: {c.get('link', '')}")
+
+    # Include more records by decision type so the LLM can answer specific questions
+    records = state.get("records") or []
+    if records:
+        refused = [r for r in records if r["decision"] == "REFUSED"]
+        granted = [r for r in records if r["decision"] == "GRANTED"]
+        pending = [r for r in records if r["decision"] == "PENDING"]
+
+        if refused:
+            parts.append(f"\nREFUSED applications nearby ({len(refused)} total, showing closest {min(len(refused), 10)}):")
+            for r in refused[:10]:
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
+
+        if granted:
+            parts.append(f"\nGRANTED applications nearby ({len(granted)} total, showing closest {min(len(granted), 8)}):")
+            for r in granted[:8]:
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
+
+        if pending:
+            parts.append(f"\nPENDING applications nearby ({len(pending)} total, showing closest {min(len(pending), 5)}):")
+            for r in pending[:5]:
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
 
     precedents = state.get("precedents", [])
     if precedents:
@@ -202,7 +227,7 @@ def _ask_llm(state: PlanningState) -> str:
         model=model,
         messages=messages,
         temperature=0.2,
-        max_tokens=1000,
+        max_tokens=1500,
     )
     return response.choices[0].message.content or _fallback_advice(state)
 
@@ -453,7 +478,11 @@ def advisor_node(state: PlanningState) -> PlanningState:
     else:
         state_update["advice"] = _fallback_advice(merged)
 
-    # 6. Build downloadable preparation brief
-    state_update["draft_brief"] = _build_draft_brief({**state, **state_update})
+    # 6. Build downloadable preparation brief only when we have enough context
+    #    (construction type specified, or user explicitly asked for preparation/brief)
+    question_lower = (state.get("question") or "").lower()
+    has_enough = bool(ctype) or any(w in question_lower for w in ("prepare", "brief", "checklist", "guide", "download", "what do i need"))
+    if has_enough:
+        state_update["draft_brief"] = _build_draft_brief({**state, **state_update})
 
     return state_update
