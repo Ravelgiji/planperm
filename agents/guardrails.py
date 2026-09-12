@@ -20,6 +20,7 @@ _INJECTION_PATTERNS = [
     re.compile(r"you\s+are\s+now\s+(a|an|the)\b", re.I),
     re.compile(r"(pretend|act\s+as\s+if|roleplay|from\s+now\s+on\s+you)", re.I),
     re.compile(r"(what\s+is\s+your\s+(api|openai|secret)\s*key)", re.I),
+    re.compile(r"your\s+\w*\s*(api|openai|secret)\s*key", re.I),
     re.compile(r"(OPENAI_API_KEY|sk-[a-zA-Z0-9]{20,})", re.I),
     re.compile(r"(disregard|override|bypass)\s+(safety|guard|filter|rules?)", re.I),
     re.compile(r"\bDAN\b.*\bjailbreak\b", re.I),

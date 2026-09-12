@@ -419,7 +419,6 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 with st.chat_message("assistant"):
                     st.write(content)
         else:
-        else:
             try:
                 # Pass cached context so follow-ups skip expensive HTTP calls
                 cached = st.session_state.get("agent_cache", {})

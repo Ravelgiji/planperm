@@ -151,7 +151,7 @@ def brief_to_pdf(markdown: str) -> bytes:
             text = _strip_bold(_strip_md_links(line.strip()[5:].strip()))
             pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(30, 55, 45)
-            pdf.cell(6, 5, chr(9744))  # ☐ checkbox
+            pdf.cell(6, 5, "[ ]")  # checkbox
             pdf.multi_cell(pdf.w - 42, 5, text)
             pdf.ln(1)
             continue
@@ -161,7 +161,7 @@ def brief_to_pdf(markdown: str) -> bytes:
             text = _strip_bold(_strip_md_links(line.strip()[2:].strip()))
             pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(30, 55, 45)
-            pdf.cell(5, 5, chr(8226))  # •
+            pdf.cell(5, 5, "-")  # bullet
             pdf.multi_cell(pdf.w - 41, 5, text)
             pdf.ln(1)
             continue
