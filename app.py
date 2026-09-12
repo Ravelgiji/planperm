@@ -398,46 +398,56 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
         with history:
             with st.chat_message("user"):
                 st.write(prompt)
-        with st.spinner("Finding the right planning specialist..."):
-            result = run_planning_graph(
-                question=prompt,
-                lat=float(site["lat"]),
-                lng=float(site["lon"]),
-                radius_km=radius_km,
-                site_label=site_label,
-                records=applications,
-                pdf_path=pdf_path,
-                # Without this the watch route has no workspace to scan, so a
-                # question the router sends to `watch` would answer "no area is
-                # being watched" even when one is.
-                workspace_id=st.session_state.get("workspace_id") or "",
-                # Everything before this turn, so "20 kms?" resolves against
-                # the question it follows. The assistant's own routing prefix
-                # is stripped - it is UI chrome, not part of the conversation.
-                chat_history=[
-                    {"role": message["role"], "content": strip_route_prefix(message)}
-                    for message in st.session_state.messages[-8:-1]
-                ],
-            )
-        decision = result.get("orchestrator", {})
-        answer = result.get("response", result.get("advice", "No response returned."))
-        content = f"**Routed to: {decision.get('route', 'advisor')}** ({decision.get('method', 'existing graph')})\n\n{answer}"
+        try:
+            with st.spinner("Finding the right planning specialist..."):
+                result = run_planning_graph(
+                    question=prompt,
+                    lat=float(site["lat"]),
+                    lng=float(site["lon"]),
+                    radius_km=radius_km,
+                    site_label=site_label,
+                    records=applications,
+                    pdf_path=pdf_path,
+                    workspace_id=st.session_state.get("workspace_id") or "",
+                    chat_history=[
+                        {"role": message["role"], "content": strip_route_prefix(message)}
+                        for message in st.session_state.messages[-8:-1]
+                    ],
+                )
+            errors = result.get("errors", [])
+            if errors:
+                error_detail = errors[-1] if len(errors) == 1 else f"{len(errors)} issues encountered"
+                # Rate limit gets a specific message
+                if any("rate limit" in str(e).lower() or "429" in str(e) for e in errors):
+                    answer = "⚠️ The AI service is temporarily rate-limited. The planning data was still retrieved — here's what we found:\n\n" + (result.get("response") or result.get("advice") or "Please try again in a moment.")
+                else:
+                    answer = result.get("response") or result.get("advice") or f"The advisor encountered an issue: {error_detail}. The planning data may still be useful — check the map for nearby records."
+            else:
+                answer = result.get("response", result.get("advice", "No response returned."))
+            decision = result.get("orchestrator", {})
+            content = f"**Routed to: {decision.get('route', 'advisor')}** ({decision.get('method', 'existing graph')})\n\n{answer}"
+
+            # Save brief if available
+            draft_brief = result.get("draft_brief", "")
+            if draft_brief:
+                st.session_state["last_draft_brief"] = draft_brief
+
+        except Exception as exc:
+            content = f"⚠️ Something went wrong while processing your question. Please try again.\n\n*Detail: {type(exc).__name__}*"
+
         st.session_state.messages.append({"role": "assistant", "content": content})
         with history:
             with st.chat_message("assistant"):
                 st.write(content)
 
-        # Offer a downloadable preparation brief when the advisor ran
-        draft_brief = result.get("draft_brief", "")
-        if draft_brief:
-            st.session_state["last_draft_brief"] = draft_brief
-
     if st.session_state.get("last_draft_brief"):
+        from agents.pdf_brief import brief_to_pdf
+        pdf_bytes = brief_to_pdf(st.session_state["last_draft_brief"])
         st.download_button(
-            "⬇ Download preparation brief",
-            data=st.session_state["last_draft_brief"],
-            file_name="planperm_preparation_brief.md",
-            mime="text/markdown",
+            "⬇ Download preparation brief (PDF)",
+            data=pdf_bytes,
+            file_name="planperm_preparation_brief.pdf",
+            mime="application/pdf",
         )
 
 
@@ -465,9 +475,9 @@ with st.spinner("Loading nearby applications..."):
     try:
         applications = fetch_nearby_applications(site["lat"], site["lon"], radius_km)
         fetch_error = ""
-    except RuntimeError as error:
+    except Exception as error:
         applications = []
-        fetch_error = str(error)
+        fetch_error = f"Planning data is temporarily unavailable. The map will show your site without records. ({type(error).__name__})"
 summary = summarize_applications(applications)
 approval_metric = f"{summary['approval_rate']}%" if summary["approval_rate"] is not None else "—"
 
@@ -509,7 +519,10 @@ with controls_column:
             search_query = st.text_input("Location", placeholder="Town or address", label_visibility="collapsed")
             find_site = st.form_submit_button("Find site", type="primary", use_container_width=True)
         if find_site:
-            coordinates = resolve_location(search_query) if search_query.strip() else None
+            try:
+                coordinates = resolve_location(search_query) if search_query.strip() else None
+            except Exception:
+                coordinates = None
             if coordinates is None:
                 st.session_state.search_error = "Location not found. Try a town or address."
             else:
