@@ -368,7 +368,11 @@ def _build_draft_brief(state: PlanningState) -> str:
 # -- LangGraph node ------------------------------------------------------------
 
 def advisor_node(state: PlanningState) -> PlanningState:
-    """LangGraph node: resolve authority, fetch records, get evidence, generate advice."""
+    """LangGraph node: resolve authority, fetch records, get evidence, generate advice.
+
+    Reuses data already in state (from a previous turn or the UI) so follow-up
+    questions skip the expensive HTTP calls and go straight to the LLM.
+    """
     errors = list(state.get("errors", []))
     lat = state["lat"]
     lng = state["lng"]
@@ -383,33 +387,41 @@ def advisor_node(state: PlanningState) -> PlanningState:
             return {"advice": cleaned, "errors": errors}
         state = {**state, "question": cleaned}
 
-    # 1. Resolve authority from boundary
-    resolution = resolve_authority(lat, lng)
-    authority = resolution.get("authority", "")
-    jurisdiction = resolution.get("jurisdiction", "Republic of Ireland")
-    if resolution["status"] != "resolved":
-        errors.append(f"Authority resolution: {resolution.get('note', 'unknown issue')}")
+    # 1. Resolve authority — reuse if already in state
+    if state.get("authority"):
+        authority = state["authority"]
+        jurisdiction = state.get("jurisdiction", "Republic of Ireland")
+        resolution = state.get("authority_resolution", {"status": "cached"})
+    else:
+        resolution = resolve_authority(lat, lng)
+        authority = resolution.get("authority", "")
+        jurisdiction = resolution.get("jurisdiction", "Republic of Ireland")
+        if resolution["status"] != "resolved":
+            errors.append(f"Authority resolution: {resolution.get('note', 'unknown issue')}")
 
-    # 2. Fetch nearby records
-    try:
-        records = fetch_nearby_applications(lat, lng, radius)
-    except RuntimeError as e:
-        errors.append(f"Record fetch failed: {e}")
-        records = []
+    # 2. Fetch nearby records — reuse if already in state
+    records = state.get("records")
+    if records is None or len(records) == 0:
+        try:
+            records = fetch_nearby_applications(lat, lng, radius)
+        except RuntimeError as e:
+            errors.append(f"Record fetch failed: {e}")
+            records = []
 
     summary = summarize_applications(records)
     candidates = site_candidates(records, lat, lng)
     precedents = find_precedents(records, ctype) if ctype else []
 
-    # 3. Get authority guidance (if we resolved an authority)
-    evidence_text = ""
-    guidance_url = authority_guidance_url(authority) if authority else None
-    if guidance_url:
-        ev = extract_web_text(guidance_url)
-        if ev["status"] == "ok":
-            evidence_text = ev["text"]
-        else:
-            errors.append(f"Guidance retrieval: {ev.get('detail', ev['status'])}")
+    # 3. Get authority guidance — reuse if already in state
+    evidence_text = state.get("evidence_text", "")
+    if not evidence_text and authority:
+        guidance_url = authority_guidance_url(authority)
+        if guidance_url:
+            ev = extract_web_text(guidance_url)
+            if ev["status"] == "ok":
+                evidence_text = ev["text"]
+            else:
+                errors.append(f"Guidance retrieval: {ev.get('detail', ev['status'])}")
 
     # 4. Build checklist and source links
     sources = authority_sources(authority) if authority else []
