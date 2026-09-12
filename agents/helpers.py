@@ -45,6 +45,10 @@ def site_candidates(records: list[dict[str, Any]], lat: float, lon: float) -> li
             "relation": relation,
             "decision": r["decision"],
             "description": r["description"],
+            "address": r.get("address", ""),
+            "application_type": r.get("application_type", ""),
+            "date_received": r.get("date_received", ""),
+            "date_decided": r.get("date_decided", ""),
             "link": r["link"],
         })
     return sorted(out, key=lambda x: x["distance_m"])

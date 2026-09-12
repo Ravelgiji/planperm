@@ -208,72 +208,159 @@ def _ask_llm(state: PlanningState) -> str:
 
 
 def _build_draft_brief(state: PlanningState) -> str:
-    """Compile the advisor's findings into a downloadable preparation brief."""
-    authority = state.get("authority", "Authority not resolved")
-    jurisdiction = state.get("jurisdiction", "Unknown")
-    ctype = state.get("construction_type", "Proposed development")
+    """Compile the advisor's findings into a readable preparation brief."""
+    authority = state.get("authority", "")
+    jurisdiction = state.get("jurisdiction", "")
+    ctype = state.get("construction_type", "")
+    condition = state.get("site_condition", "")
     summary = state.get("summary", {})
     candidates = state.get("candidates", [])
     precedents = state.get("precedents", [])
-    checklist = state.get("checklist", [])
     sources = state.get("sources", [])
+    site_label = state.get("site_label", "")
+    lat, lng = state.get("lat"), state.get("lng")
+    radius = state.get("radius_km", 2.0)
 
     lines = [
-        "# PlanPerm — Preparation Brief",
-        f"**DRAFT FOR REVIEW — NOT A SUBMISSION**\n",
-        f"## Site & Authority",
-        f"- Coordinates: {state.get('lat', '?')}, {state.get('lng', '?')}",
-        f"- Authority: {authority}",
-        f"- Jurisdiction: {jurisdiction}",
-        f"- Proposal: {ctype}",
-        f"- Site condition: {state.get('site_condition', 'Not specified')}\n",
+        "# Preparation Brief",
+        "",
+        "> **This is a research summary, not a planning application.**",
+        "> Verify every detail with the planning authority before acting.\n",
     ]
 
-    if summary:
-        lines.append("## Nearby Planning Context")
-        lines.append(f"- {summary.get('total', 0)} applications within {state.get('radius_km', 2.0)} km")
-        lines.append(f"- Approval rate: {summary.get('approval_rate', 'N/A')}%")
-        lines.append(f"- Granted: {summary.get('granted', 0)} | Refused: {summary.get('refused', 0)} | Pending: {summary.get('pending', 0)}\n")
+    # --- Site overview ---
+    lines.append("## Your site\n")
+    location = site_label or (f"{lat}, {lng}" if lat else "Not specified")
+    lines.append(f"**Location:** {location}  ")
+    if authority:
+        lines.append(f"**Planning authority:** {authority} ({jurisdiction})  ")
+    if ctype:
+        lines.append(f"**Proposal:** {ctype}  ")
+    if condition:
+        lines.append(f"**Site condition:** {condition}  ")
+    lines.append("")
 
+    # --- What the numbers say ---
+    if summary and summary.get("total"):
+        total = summary["total"]
+        rate = summary.get("approval_rate")
+        lines.append("## What the nearby record shows\n")
+        lines.append(f"Within {radius} km of your pin there are **{total} planning applications** on record.")
+        if rate is not None:
+            lines.append(f"Of those that have been decided, **{rate}%** were granted.\n")
+            granted = summary.get("granted", 0)
+            refused = summary.get("refused", 0)
+            pending = summary.get("pending", 0)
+            lines.append(f"| Granted | Refused | Pending |")
+            lines.append(f"|---------|---------|---------|")
+            lines.append(f"| {granted} | {refused} | {pending} |\n")
+
+    # --- Records on or next to the site ---
     if candidates:
-        lines.append("## Records Near Your Pin (within 100m)")
+        lines.append("## What happened near your site\n")
+        lines.append("These are real planning decisions within 100 metres of your pin. "
+                      "They show what has been approved and refused in your immediate area — "
+                      "useful context, but not a guarantee for your proposal.\n")
         for c in candidates[:6]:
-            lines.append(f"- **{c['ref']}** ({c['decision']}) — {c['distance_m']}m — {c['description'][:150]}")
-        lines.append("")
+            desc = c["description"]
+            if len(desc) > 300:
+                desc = desc[:300].rsplit(" ", 1)[0] + "…"
+            address = c.get("address", "")
+            date_decided = c.get("date_decided", "")
+            date_received = c.get("date_received", "")
+            app_type = c.get("application_type", "")
 
+            if c["decision"] == "GRANTED":
+                icon, verb = "✅", "was **granted**"
+            elif c["decision"] == "REFUSED":
+                icon, verb = "❌", "was **refused**"
+            elif c["decision"] == "PENDING":
+                icon, verb = "⏳", "is **pending a decision**"
+            else:
+                icon, verb = "↩️", "was **withdrawn**"
+
+            # Lead with what happened, where, and when — not a cryptic ID
+            header = f"{icon} **{c['distance_m']}m from your pin**"
+            if address:
+                header += f" — {address}"
+            lines.append(header + "  ")
+
+            timing = ""
+            if date_decided:
+                timing = f"Decided {date_decided}"
+            elif date_received:
+                timing = f"Received {date_received}"
+            if app_type:
+                timing = f"{app_type} · {timing}" if timing else app_type
+
+            if timing:
+                lines.append(f"*{timing}*  ")
+
+            # What was proposed
+            lines.append(f"{desc}  ")
+
+            # The verdict
+            lines.append(f"This application {verb}.")
+
+            # Link and reference at the end, not the top
+            ref_line = f"Reference: {c['ref']}"
+            if c.get("link"):
+                ref_line += f" · [View full record]({c['link']})"
+            lines.append(f"*{ref_line}*\n")
+
+    # --- What similar applications tell you ---
     if precedents:
-        lines.append("## Similar Past Applications")
         granted = [p for p in precedents if p["decision"] == "GRANTED"]
         refused = [p for p in precedents if p["decision"] == "REFUSED"]
+        lines.append("## What similar applications tell you\n")
         if granted:
-            lines.append(f"### Granted ({len(granted)})")
+            lines.append(f"**{len(granted)} similar application(s) were granted nearby:**\n")
             for p in granted[:4]:
-                lines.append(f"- **{p['application_ref']}** — {p['description'][:200]}")
+                desc = p["description"]
+                if len(desc) > 250:
+                    desc = desc[:250].rsplit(" ", 1)[0] + "…"
+                lines.append(f"- **{p['application_ref']}** — {desc}")
                 if p.get("link"):
-                    lines.append(f"  Source: {p['link']}")
+                    lines.append(f"  [View record]({p['link']})")
+            lines.append("")
         if refused:
-            lines.append(f"### Refused ({len(refused)})")
+            lines.append(f"**{len(refused)} similar application(s) were refused:**\n")
+            lines.append("Review these to understand what the authority objected to.\n")
             for p in refused[:4]:
-                lines.append(f"- **{p['application_ref']}** — {p['description'][:200]}")
+                desc = p["description"]
+                if len(desc) > 250:
+                    desc = desc[:250].rsplit(" ", 1)[0] + "…"
+                lines.append(f"- **{p['application_ref']}** — {desc}")
                 if p.get("link"):
-                    lines.append(f"  Source: {p['link']}")
-        lines.append("")
+                    lines.append(f"  [View record]({p['link']})")
+            lines.append("")
 
-    if checklist:
-        lines.append("## Preparation Checklist")
-        for item in checklist:
-            lines.append(f"- [ ] **{item['title']}** — {item['guidance']}")
-        lines.append("")
+    # --- What to prepare ---
+    lines.append("## What to prepare next\n")
+    lines.append("Work through these before contacting the authority or an architect.\n")
+    steps = [
+        ("1. Confirm the application route", "Check which type of permission applies (full, outline, retention). Your authority's guidance page will list the options."),
+        ("2. Confirm site ownership and interest", "Gather title deeds, land registry folio, and any third-party consent needed."),
+        ("3. Get your maps and site layout", "You need an Ordnance Survey location map (1:1000 scale, site outlined in red, land in ownership in blue) and a site layout plan (minimum 1:500 scale)."),
+        ("4. Prepare drawings", "Floor plans, elevations, and sections — typically at 1:200 scale. Show existing and proposed work in different colours."),
+        ("5. Check access, drainage and constraints", "Does the site have road access? Drainage and water connections? Any flood risk, protected structures, or heritage issues nearby?"),
+        ("6. Verify fees, notices and submission", "Check the current fee, which newspaper to use for the public notice, and whether the authority accepts e-planning submissions."),
+    ]
+    for title, detail in steps:
+        lines.append(f"**{title}**  ")
+        lines.append(f"{detail}\n")
 
+    # --- Authority links ---
     if sources:
-        lines.append("## Authority Source Links")
+        lines.append("## Authority sources\n")
+        lines.append("These are the official pages for your planning authority.\n")
         for s in sources:
             lines.append(f"- [{s['title']}]({s['url']})")
         lines.append("")
 
-    lines.append("---")
-    lines.append("*Informational preparation support only — not legal, planning, architectural, or financial advice.*")
-    lines.append(f"*Generated by PlanPerm from live data.*")
+    lines.append("---\n")
+    lines.append("*This brief is informational preparation support only — not legal, planning, architectural, or financial advice. "
+                 "Generated by PlanPerm from live government data. Verify all details with the planning authority.*")
 
     return "\n".join(lines)
 
