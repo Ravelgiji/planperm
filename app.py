@@ -470,6 +470,9 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 draft_brief = result.get("draft_brief", "")
                 if draft_brief:
                     st.session_state["last_draft_brief"] = draft_brief
+                else:
+                    # Don't carry forward the brief from a previous question
+                    st.session_state.pop("last_draft_brief", None)
 
             except Exception as exc:
                 content = f"⚠️ Something went wrong while processing your question. Please try again.\n\n*Detail: {type(exc).__name__}*"

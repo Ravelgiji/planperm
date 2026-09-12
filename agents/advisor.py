@@ -478,11 +478,15 @@ def advisor_node(state: PlanningState) -> PlanningState:
     else:
         state_update["advice"] = _fallback_advice(merged)
 
-    # 6. Build downloadable preparation brief only when we have enough context
-    #    (construction type specified, or user explicitly asked for preparation/brief)
+    # 6. Build downloadable preparation brief only on explicit preparation questions,
+    #    not on follow-ups about specific topics
     question_lower = (state.get("question") or "").lower()
-    has_enough = bool(ctype) or any(w in question_lower for w in ("prepare", "brief", "checklist", "guide", "download", "what do i need"))
-    if has_enough:
+    is_preparation_question = any(w in question_lower for w in (
+        "what do i need", "prepare", "brief", "checklist", "guide", "download",
+        "how to apply", "application process", "steps to",
+    ))
+    # Only generate if it's a broad preparation question AND construction type is known
+    if is_preparation_question and (ctype or "new" in question_lower or "house" in question_lower or "dwelling" in question_lower):
         state_update["draft_brief"] = _build_draft_brief({**state, **state_update})
 
     return state_update
