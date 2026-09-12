@@ -390,12 +390,21 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
     history = st.container(height=560 if expanded else 330, border=False, key="assistant_history")
     with history:
         if not st.session_state.messages:
-            st.markdown("<div class='assistant-welcome'>Ask about the selected site, nearby decisions, or a planning record on the map.</div>", unsafe_allow_html=True)
+            # Summary card showing loaded context
+            summary = summarize_applications(applications)
+            rate_text = f"{summary['approval_rate']}% approval" if summary.get("approval_rate") is not None else "no decisions yet"
+            st.markdown(
+                f"<div class='assistant-welcome'>"
+                f"📍 <strong>{safe_text(site_label)}</strong> · {summary['total']} records · {rate_text}<br>"
+                f"<span style='font-size:.82em;opacity:.8'>Ask about your site, nearby decisions, what you need to prepare, or upload a draft PDF for review.</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
-    if prompt := st.chat_input("Ask PlanPerm", key="assistant_prompt"):
+    if prompt := (st.session_state.pop("prefill_question", None) or st.chat_input("Ask PlanPerm", key="assistant_prompt")):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with history:
             with st.chat_message("user"):
@@ -567,6 +576,21 @@ with controls_column:
     st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
     with st.container(border=False):
         render_watch_control(site, radius_km)
+
+    # Quick-ask about a specific record from the map
+    if applications:
+        st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+        with st.container(border=False):
+            st.markdown("<div class='planperm-kicker'>Ask about a record</div>", unsafe_allow_html=True)
+            record_options = [f"{a['application_ref']} — {a['decision']} — {a.get('address', '')[:40]}" for a in applications[:20]]
+            selected_record = st.selectbox("Select a record", record_options, label_visibility="collapsed", key="record_select")
+            if st.button("Ask the advisor about this", use_container_width=True):
+                ref = selected_record.split(" — ")[0]
+                record = next((a for a in applications if a["application_ref"] == ref), None)
+                if record:
+                    question = f"Tell me about planning record {ref} at {record.get('address', 'this location')}. It was {record['decision']}. How does it compare to what I might propose here?"
+                    st.session_state["prefill_question"] = question
+                    st.rerun()
 
 with map_column:
     st.markdown(
