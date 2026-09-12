@@ -409,65 +409,76 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
         with history:
             with st.chat_message("user"):
                 st.write(prompt)
-        try:
-            # Pass cached context so follow-ups skip expensive HTTP calls
-            cached = st.session_state.get("agent_cache", {})
-            with st.spinner("Thinking..."):
-                result = run_planning_graph(
-                    question=prompt,
-                    lat=float(site["lat"]),
-                    lng=float(site["lon"]),
-                    radius_km=radius_km,
-                    site_label=site_label,
-                    records=applications or cached.get("records"),
-                    pdf_path=pdf_path,
-                    workspace_id=st.session_state.get("workspace_id") or "",
-                    # Carry forward resolved context from previous turns
-                    authority=cached.get("authority", ""),
-                    jurisdiction=cached.get("jurisdiction", ""),
-                    authority_resolution=cached.get("authority_resolution", {}),
-                    evidence_text=cached.get("evidence_text", ""),
-                    chat_history=[
-                        {"role": message["role"], "content": strip_route_prefix(message)}
-                        for message in st.session_state.messages[-8:-1]
-                    ],
-                )
 
-            # Cache the resolved context for next turn
-            st.session_state["agent_cache"] = {
-                k: result[k] for k in ("authority", "jurisdiction", "authority_resolution",
-                                         "evidence_text", "records", "summary", "sources",
-                                         "candidates", "precedents", "checklist")
-                if k in result
-            }
+        # Intercept greetings and small talk — no need to call the agent
+        from agents.guardrails import is_small_talk, GREETING_RESPONSE
+        if is_small_talk(prompt):
+            content = GREETING_RESPONSE
+            st.session_state.messages.append({"role": "assistant", "content": content})
+            with history:
+                with st.chat_message("assistant"):
+                    st.write(content)
+        else:
+        else:
+            try:
+                # Pass cached context so follow-ups skip expensive HTTP calls
+                cached = st.session_state.get("agent_cache", {})
+                with st.spinner("Thinking..."):
+                    result = run_planning_graph(
+                        question=prompt,
+                        lat=float(site["lat"]),
+                        lng=float(site["lon"]),
+                        radius_km=radius_km,
+                        site_label=site_label,
+                        records=applications or cached.get("records"),
+                        pdf_path=pdf_path,
+                        workspace_id=st.session_state.get("workspace_id") or "",
+                        # Carry forward resolved context from previous turns
+                        authority=cached.get("authority", ""),
+                        jurisdiction=cached.get("jurisdiction", ""),
+                        authority_resolution=cached.get("authority_resolution", {}),
+                        evidence_text=cached.get("evidence_text", ""),
+                        chat_history=[
+                            {"role": message["role"], "content": strip_route_prefix(message)}
+                            for message in st.session_state.messages[-8:-1]
+                        ],
+                    )
 
-            errors = result.get("errors", [])
-            if errors:
-                if any("rate limit" in str(e).lower() or "429" in str(e) for e in errors):
-                    answer = "⚠️ The AI service is temporarily rate-limited. The planning data was still retrieved — here's what we found:\n\n" + (result.get("response") or result.get("advice") or "Please try again in a moment.")
+                # Cache the resolved context for next turn
+                st.session_state["agent_cache"] = {
+                    k: result[k] for k in ("authority", "jurisdiction", "authority_resolution",
+                                             "evidence_text", "records", "summary", "sources",
+                                             "candidates", "precedents", "checklist")
+                    if k in result
+                }
+
+                errors = result.get("errors", [])
+                if errors:
+                    if any("rate limit" in str(e).lower() or "429" in str(e) for e in errors):
+                        answer = "⚠️ The AI service is temporarily rate-limited. The planning data was still retrieved — here's what we found:\n\n" + (result.get("response") or result.get("advice") or "Please try again in a moment.")
+                    else:
+                        answer = result.get("response") or result.get("advice") or "The advisor encountered an issue. The planning data may still be useful — check the map for nearby records."
                 else:
-                    answer = result.get("response") or result.get("advice") or "The advisor encountered an issue. The planning data may still be useful — check the map for nearby records."
-            else:
-                answer = result.get("response", result.get("advice", "No response returned."))
+                    answer = result.get("response", result.get("advice", "No response returned."))
 
-            # Clean label instead of debug routing header
-            decision = result.get("orchestrator", {})
-            route = decision.get("route", "advisor")
-            route_labels = {"advisor": "📋 Advisor", "draft": "📄 Draft Review", "watch": "👁 Watch", "clarify": "❓ Clarify", "coordinator": "🔗 Coordinator"}
-            label = route_labels.get(route, route)
-            content = f"*{label}*\n\n{answer}"
+                # Clean label instead of debug routing header
+                decision = result.get("orchestrator", {})
+                route = decision.get("route", "advisor")
+                route_labels = {"advisor": "📋 Advisor", "draft": "📄 Draft Review", "watch": "👁 Watch", "clarify": "❓ Clarify", "coordinator": "🔗 Coordinator"}
+                label = route_labels.get(route, route)
+                content = f"*{label}*\n\n{answer}"
 
-            draft_brief = result.get("draft_brief", "")
-            if draft_brief:
-                st.session_state["last_draft_brief"] = draft_brief
+                draft_brief = result.get("draft_brief", "")
+                if draft_brief:
+                    st.session_state["last_draft_brief"] = draft_brief
 
-        except Exception as exc:
-            content = f"⚠️ Something went wrong while processing your question. Please try again.\n\n*Detail: {type(exc).__name__}*"
+            except Exception as exc:
+                content = f"⚠️ Something went wrong while processing your question. Please try again.\n\n*Detail: {type(exc).__name__}*"
 
-        st.session_state.messages.append({"role": "assistant", "content": content})
-        with history:
-            with st.chat_message("assistant"):
-                st.write(content)
+            st.session_state.messages.append({"role": "assistant", "content": content})
+            with history:
+                with st.chat_message("assistant"):
+                    st.write(content)
 
     if st.session_state.get("last_draft_brief"):
         from agents.pdf_brief import brief_to_pdf
