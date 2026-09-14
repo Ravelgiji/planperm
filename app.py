@@ -703,21 +703,6 @@ with controls_column:
     with st.container(border=False):
         render_watch_control(site, radius_km)
 
-    # Quick-ask about a specific record from the map
-    if applications:
-        st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
-        with st.container(border=False):
-            st.markdown("<div class='planperm-kicker'>Ask about a record</div>", unsafe_allow_html=True)
-            record_options = [f"{a['application_ref']} — {a['decision']} — {a.get('address', '')[:40]}" for a in applications[:20]]
-            selected_record = st.selectbox("Select a record", record_options, label_visibility="collapsed", key="record_select")
-            if st.button("Ask the advisor about this", use_container_width=True):
-                ref = selected_record.split(" — ")[0]
-                record = next((a for a in applications if a["application_ref"] == ref), None)
-                if record:
-                    question = f"Tell me about planning record {ref} at {record.get('address', 'this location')}. It was {record['decision']}. How does it compare to what I might propose here? Include the link to the original record so I can check the details."
-                    st.session_state["prefill_question"] = question
-                    st.rerun()
-
 with map_column:
     st.markdown(
         f"<div class='site-line'><span class='dot'></span>"
