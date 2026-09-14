@@ -62,6 +62,18 @@ INTAKE_FIELDS: list[tuple[str, str, str, bool]] = [
     ("existing_structures", "Existing structures",
      "Is there anything on the site currently — an existing building, ruins, greenfield?",
      False),
+    ("flood_history", "Flood history",
+     "Has the site ever been flooded, to your knowledge? If yes, when and to what extent?",
+     False),
+    ("previous_site_use", "Previous site use",
+     "Are you aware of any previous uses of the site — for example, dumping, quarrying, or other activities?",
+     False),
+    ("pre_application_consultation", "Pre-application consultation",
+     "Have you had a pre-planning consultation with the council about this development? If yes, when and any reference number?",
+     False),
+    ("protected_structure", "Protected structure or conservation area",
+     "Is the site or any nearby structure a protected structure, or is it in an architectural conservation area (ACA)?",
+     False),
 ]
 
 FIELD_KEYS = {f[0] for f in INTAKE_FIELDS}
@@ -70,6 +82,8 @@ REQUIRED_KEYS = {f[0] for f in INTAKE_FIELDS if f[3]}
 # How many questions to ask per turn. Batching avoids the user feeling
 # interrogated, but still gathers data efficiently.
 QUESTIONS_PER_TURN = 3
+# Galway needs 8 fields — ask 4 per turn so it's done in 2 rounds max
+GALWAY_QUESTIONS_PER_TURN = 4
 
 
 # ---------------------------------------------------------------------------
@@ -245,15 +259,30 @@ def missing_fields(profile: dict[str, Any], required_only: bool = False) -> list
     ]
 
 
-def is_complete(profile: dict[str, Any]) -> bool:
-    """True when all required fields have values."""
-    return all(profile.get(k) for k in REQUIRED_KEYS)
+# Fields that the Galway City form needs filled — these become required
+# when the authority is Galway City Council so the intake keeps asking.
+GALWAY_FORM_KEYS = {
+    "development_type", "storeys", "bedrooms", "floor_area_sqm",
+    "garage", "water_supply", "wastewater", "site_area_hectares",
+    "flood_history", "previous_site_use", "pre_application_consultation",
+    "protected_structure",
+}
+
+
+def is_complete(profile: dict[str, Any], authority: str = "") -> bool:
+    """True when all required fields have values.
+
+    For Galway City, the form needs more fields than the default required set.
+    """
+    required = GALWAY_FORM_KEYS if "galway city" in authority.lower() else REQUIRED_KEYS
+    return all(profile.get(k) for k in required)
 
 
 def next_questions(
     profile: dict[str, Any],
     area_profile: dict[str, Any] | None = None,
     guidance_hints: dict[str, Any] | None = None,
+    authority: str = "",
 ) -> list[dict[str, str]]:
     """The next batch of questions to ask, enriched with area context.
 
@@ -264,27 +293,29 @@ def next_questions(
     if not gaps:
         return []
 
-    # Prioritise required fields, then optional ones that the guidance
-    # emphasises for this authority
     area_profile = area_profile or {}
     guidance_hints = guidance_hints or {}
+    is_galway = "galway city" in authority.lower()
 
     def priority(field_tuple: tuple[str, str, str]) -> int:
         key = field_tuple[0]
         # Required fields first
         if key in REQUIRED_KEYS:
             base = 0
+        elif is_galway and key in GALWAY_FORM_KEYS:
+            base = 10  # Galway form fields are nearly as important as required
         else:
             base = 100
         # Boost fields the guidance emphasises
         if key == "wastewater" and guidance_hints.get("wastewater_emphasis"):
-            base -= 10
+            base -= 5
         if key == "site_access" and guidance_hints.get("access_emphasis"):
-            base -= 10
+            base -= 5
         return base
 
     gaps.sort(key=priority)
-    batch = gaps[:QUESTIONS_PER_TURN]
+    per_turn = GALWAY_QUESTIONS_PER_TURN if is_galway else QUESTIONS_PER_TURN
+    batch = gaps[:per_turn]
 
     questions = []
     for key, label, question_text in batch:
@@ -334,6 +365,10 @@ Field keys and what they mean:
 - wastewater: wastewater handling (mains sewer, septic tank, treatment system)
 - site_area_hectares: site area in hectares (convert from acres if given: 1 acre ≈ 0.4 ha)
 - existing_structures: what's currently on the site (greenfield, existing building, ruins, etc.)
+- flood_history: whether the site has flooded (return the user's answer as-is, e.g. "no", "yes, 2020")
+- previous_site_use: previous uses of the site (e.g. "none", "former quarry", "dumping")
+- pre_application_consultation: whether pre-planning happened (e.g. "no", "yes, March 2026, ref PP/123")
+- protected_structure: whether the site is a protected structure or in an ACA (e.g. "no", "yes, ACA")
 
 Be precise. If the user says "two storey" set storeys to "2". If they say "half acre" set site_area_hectares to "0.2".
 """
@@ -459,6 +494,30 @@ def extract_answers_regex(user_text: str) -> dict[str, str]:
         if m:
             ha = round(float(m.group(1)) * 0.4047, 2)
             found["site_area_hectares"] = str(ha)
+
+    # Flood history
+    if "no flood" in lowered or "never flood" in lowered or "not flood" in lowered:
+        found["flood_history"] = "no"
+    elif "flood" in lowered:
+        found["flood_history"] = "yes"
+
+    # Previous site use
+    if "no previous" in lowered or "no prior" in lowered or "none" in lowered.split():
+        found["previous_site_use"] = "none"
+    elif any(w in lowered for w in ("quarry", "dump", "landfill", "industrial")):
+        found["previous_site_use"] = text.strip()
+
+    # Pre-application consultation
+    if "no pre" in lowered or "no consultation" in lowered or ("pre" in lowered and "no" in lowered.split()):
+        found["pre_application_consultation"] = "no"
+    elif any(w in lowered for w in ("pre-planning", "pre planning", "consultation", "preplanning")):
+        found["pre_application_consultation"] = text.strip()
+
+    # Protected structure
+    if "not protected" in lowered or "no protected" in lowered or "not in" in lowered and "aca" in lowered:
+        found["protected_structure"] = "no"
+    elif any(w in lowered for w in ("protected structure", "conservation area", "aca")):
+        found["protected_structure"] = "yes"
 
     return found
 
@@ -744,14 +803,66 @@ def is_personal_opt_in(text: str) -> bool | None:
     """Detect yes/no to the personal details offer.
 
     Returns True for yes, False for no, None if unclear.
+    Uses LLM when available for nuanced answers, regex for clear-cut cases.
     """
     lowered = text.strip().lower().rstrip("!.,")
+
+    # Only exact matches — no regex guessing on longer sentences
     if lowered in ("yes", "y", "yeah", "yep", "sure", "go ahead", "please", "ok", "okay", "do it"):
         return True
     if lowered in ("no", "n", "nah", "nope", "skip", "no thanks", "not now"):
         return False
-    if re.search(r"\b(yes|yeah|please|go ahead|fill)\b", lowered):
-        return True
-    if re.search(r"\b(no|skip|don'?t|not now|not sure)\b", lowered):
+
+    # For anything longer than a few words, ask the LLM
+    if len(lowered.split()) > 3:
+        return _llm_opt_in(text)
+
+    # Short but not exact match — still try simple patterns
+    if re.search(r"\b(without|don'?t|skip|not)\b", lowered):
         return False
+    if lowered in ("sure thing", "go for it", "fill it"):
+        return True
+
     return None
+
+
+def _llm_opt_in(text: str) -> bool | None:
+    """Use the LLM to classify whether the user wants personal details filled."""
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        return None
+
+    try:
+        import json as _json
+        from openai import OpenAI
+
+        base_url = os.getenv("PLANPERM_LLM_BASE_URL")
+        model = os.getenv("PLANPERM_LLM_MODEL", "gpt-4.1-mini")
+        client = OpenAI(api_key=api_key, **({"base_url": base_url} if base_url else {}))
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content":
+                 "The user was asked: 'Would you like me to pre-fill the application form with your personal details (name, address)? yes/no'\n\n"
+                 "Classify their response as one of:\n"
+                 '- {"answer": "yes"} — they want to provide personal details for the form\n'
+                 '- {"answer": "no"} — they decline, or want the form without personal details\n'
+                 '- {"answer": "unclear"} — they are asking a question or saying something unrelated to the yes/no choice\n\n'
+                 "Respond with JSON only."},
+                {"role": "user", "content": text},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0,
+            max_tokens=20,
+        )
+        raw = response.choices[0].message.content or "{}"
+        parsed = _json.loads(raw)
+        answer = parsed.get("answer", "unclear")
+        if answer == "yes":
+            return True
+        if answer == "no":
+            return False
+        return None
+    except Exception:
+        return None

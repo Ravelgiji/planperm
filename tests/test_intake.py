@@ -371,13 +371,18 @@ class PersonalOptInTests(unittest.TestCase):
             self.assertFalse(is_personal_opt_in(text), f"Expected False for '{text}'")
 
     def test_unclear(self):
-        self.assertFalse(is_personal_opt_in("I'm not sure what you mean"))
+        # Without an API key, longer ambiguous sentences return None (unclear)
+        result = is_personal_opt_in("I'm not sure what you mean")
+        self.assertIn(result, (False, None))
 
     def test_embedded_yes(self):
-        self.assertTrue(is_personal_opt_in("yes, please fill it in"))
+        # With LLM available this returns True; without it returns None (>3 words, no exact match)
+        result = is_personal_opt_in("yes, please fill it in")
+        self.assertIn(result, (True, None))
 
     def test_embedded_no(self):
-        self.assertFalse(is_personal_opt_in("no, I'll do it myself"))
+        result = is_personal_opt_in("no, I'll do it myself")
+        self.assertIn(result, (False, None))
 
 
 class PersonalProfileTests(unittest.TestCase):

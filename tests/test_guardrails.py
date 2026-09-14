@@ -92,6 +92,11 @@ class SmallTalkTests(unittest.TestCase):
     def test_very_short(self):
         self.assertTrue(is_small_talk("hi"))
 
+    def test_short_reply_in_conversation_is_not_small_talk(self):
+        self.assertFalse(is_small_talk("no", has_history=True))
+        self.assertFalse(is_small_talk("yes", has_history=True))
+        self.assertFalse(is_small_talk("ok", has_history=True))
+
     def test_greeting_response_exists(self):
         self.assertIn("PlanPerm", GREETING_RESPONSE)
 

@@ -117,8 +117,7 @@ _GREETINGS = {
     "hello", "hi", "hey", "howdy", "hiya", "good morning", "good afternoon",
     "good evening", "morning", "afternoon", "evening", "yo", "sup", "whats up",
     "what's up", "how are you", "how's it going", "thanks", "thank you",
-    "cheers", "bye", "goodbye", "see you", "ok", "okay", "cool", "nice",
-    "great", "awesome", "test", "testing", "help",
+    "cheers", "bye", "goodbye", "see you", "test", "testing",
 }
 
 GREETING_RESPONSE = (
@@ -132,7 +131,53 @@ GREETING_RESPONSE = (
 )
 
 
-def is_small_talk(text: str) -> bool:
-    """Return True if the input is a greeting or non-question."""
+def is_small_talk(text: str, has_history: bool = False) -> bool:
+    """Return True if the input is a greeting or non-question.
+
+    If has_history is True (conversation is ongoing), short answers like 'yes',
+    'no', 'ok' are NOT small talk — they're replies to the advisor's question.
+    """
     cleaned = text.strip().lower().rstrip("!?.,:;")
+    if has_history and len(cleaned) < 10:
+        return False  # Short reply to an ongoing conversation — let the agent handle it
     return cleaned in _GREETINGS or len(cleaned) < 3
+
+
+# -- Off-topic detection -------------------------------------------------------
+
+_OFF_TOPIC_PATTERNS = [
+    re.compile(r"\b(weather|forecast|temperature|rain|sunny)\b", re.I),
+    re.compile(r"\b(recipe|cook|food|restaurant|eat)\b", re.I),
+    re.compile(r"\b(football|soccer|hurling|rugby|sport|match|game score)\b", re.I),
+    re.compile(r"\b(movie|film|music|song|book|novel)\b", re.I),
+    re.compile(r"\b(stock|crypto|bitcoin|invest|trading)\b", re.I),
+    re.compile(r"\b(joke|funny|laugh|meme)\b", re.I),
+    re.compile(r"\b(translate|translation|language lesson)\b", re.I),
+    re.compile(r"\b(write me a poem|write a story|creative writing)\b", re.I),
+    re.compile(r"\b(medical|diagnosis|symptom|health advice)\b", re.I),
+    re.compile(r"\b(lottery|gambling|bet)\b", re.I),
+]
+
+# Planning-related words that override the off-topic check — "flood" could
+# look like weather but is a legitimate planning concern.
+_PLANNING_OVERRIDES = re.compile(
+    r"\b(planning|permission|application|dwelling|extension|build|site|council|"
+    r"authority|refused|granted|pending|drainage|flood risk|heritage|protected|"
+    r"zoning|development|architect|survey|fee|notice|appeal)\b", re.I
+)
+
+OFF_TOPIC_RESPONSE = (
+    "I'm the PlanPerm planning assistant — I can only help with Irish planning "
+    "permission questions.\n\n"
+    "Try asking something like:\n"
+    "- *\"What do I need for a new dwelling?\"*\n"
+    "- *\"Show me refused applications near my pin\"*\n"
+    "- *\"What are the fees for Galway City Council?\"*"
+)
+
+
+def is_off_topic(text: str) -> bool:
+    """Return True if the input is clearly not about planning."""
+    if _PLANNING_OVERRIDES.search(text):
+        return False
+    return any(p.search(text) for p in _OFF_TOPIC_PATTERNS)

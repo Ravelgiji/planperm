@@ -425,6 +425,10 @@ def _build_draft_brief(state: PlanningState) -> str:
             "wastewater": "Wastewater",
             "site_area_hectares": "Site area",
             "existing_structures": "Existing structures",
+            "flood_history": "Flood history",
+            "previous_site_use": "Previous site use",
+            "pre_application_consultation": "Pre-planning consultation",
+            "protected_structure": "Protected structure / ACA",
         }
         for key, label in _profile_labels.items():
             val = profile.get(key)
@@ -565,6 +569,48 @@ def _build_draft_brief(state: PlanningState) -> str:
     # --- What to prepare ---
     lines.append("## What to prepare next\n")
     lines.append("Work through these before contacting the authority or an architect.\n")
+
+    # Include council-specific details from the scraped guidance if available
+    evidence = state.get("evidence_text", "")
+    if evidence and authority:
+        lines.append(f"### {authority} — key requirements from published guidance\n")
+        lines.append("The following details were extracted from your council's published guidance page. "
+                      "They may be outdated — always confirm with the authority.\n")
+        # Extract specific actionable items from the guidance text
+        evidence_lower = evidence.lower()
+        extracts = []
+        if "e-planning" in evidence_lower or "eplan" in evidence_lower:
+            extracts.append("**Online submissions:** Your council accepts applications through the national e-Planning portal (planning.localgov.ie).")
+        if "1:1000" in evidence or "1:500" in evidence or "1:200" in evidence:
+            scales = []
+            if "1:1000" in evidence:
+                scales.append("1:1000 (location map)")
+            if "1:500" in evidence:
+                scales.append("1:500 (site layout)")
+            if "1:200" in evidence:
+                scales.append("1:200 (floor plans, elevations, sections)")
+            extracts.append(f"**Map and drawing scales:** {', '.join(scales)}.")
+        if "six copies" in evidence_lower or "6 copies" in evidence_lower:
+            extracts.append("**Copies required:** Six copies of plans and drawings (ten for protected structures).")
+        if "site notice" in evidence_lower:
+            extracts.append("**Site notice:** Must be erected within 2 weeks before submitting the application.")
+        if "newspaper" in evidence_lower:
+            # Try to extract newspaper names
+            import re
+            newspaper_section = re.search(r'(?:newspaper|approved newspaper).*?(?:\n\n|\Z)', evidence, re.I | re.S)
+            if newspaper_section:
+                extracts.append(f"**Newspaper notice:** Required within 2 weeks before application. Check approved newspapers list on the authority's guidance page.")
+        if any(fee in evidence_lower for fee in ("€80", "€240", "fee")):
+            extracts.append("**Fees:** See fee schedule on the authority's guidance page — varies by development type and scale.")
+        if "pre-planning" in evidence_lower or "preplanning" in evidence_lower:
+            extracts.append("**Pre-planning meeting:** Your council offers pre-application consultation — recommended before submitting.")
+        if extracts:
+            for extract in extracts:
+                lines.append(f"- {extract}")
+            lines.append("")
+        else:
+            lines.append(f"Guidance was retrieved ({len(evidence):,} chars) but specific requirements could not be auto-extracted. Review the source directly.\n")
+
     steps = [
         ("1. Confirm the application route", "Check which type of permission applies (full, outline, retention). Your authority's guidance page will list the options."),
         ("2. Confirm site ownership and interest", "Gather title deeds, land registry folio, and any third-party consent needed."),
@@ -573,6 +619,7 @@ def _build_draft_brief(state: PlanningState) -> str:
         ("5. Check access, drainage and constraints", "Does the site have road access? Drainage and water connections? Any flood risk, protected structures, or heritage issues nearby?"),
         ("6. Verify fees, notices and submission", "Check the current fee, which newspaper to use for the public notice, and whether the authority accepts e-planning submissions."),
     ]
+    lines.append("### General preparation steps\n")
     for title, detail in steps:
         lines.append(f"**{title}**  ")
         lines.append(f"{detail}\n")
@@ -593,6 +640,47 @@ def _build_draft_brief(state: PlanningState) -> str:
 
 
 # -- LangGraph node ------------------------------------------------------------
+
+def _intake_summary(profile: dict[str, Any], state: dict[str, Any]) -> str:
+    """Concise summary after intake completes — not a full research response."""
+    lines = ["**Your project details are ready.** Here's what I'll use for the preparation brief:\n"]
+
+    _labels = {
+        "development_type": "Development",
+        "storeys": "Storeys",
+        "bedrooms": "Bedrooms",
+        "floor_area_sqm": "Floor area",
+        "garage": "Garage",
+        "site_access": "Site access",
+        "water_supply": "Water supply",
+        "wastewater": "Wastewater",
+        "site_area_hectares": "Site area",
+        "existing_structures": "Existing structures",
+        "flood_history": "Flood history",
+        "previous_site_use": "Previous site use",
+        "pre_application_consultation": "Pre-planning consultation",
+        "protected_structure": "Protected structure / ACA",
+    }
+    for key, label in _labels.items():
+        val = profile.get(key)
+        if val:
+            suffix = ""
+            if key == "floor_area_sqm":
+                suffix = " sqm"
+            elif key == "site_area_hectares":
+                suffix = " ha"
+            lines.append(f"- **{label}:** {val}{suffix}")
+
+    summary = state.get("summary", {})
+    authority = state.get("authority", "")
+    if summary and summary.get("total"):
+        rate = summary.get("approval_rate", "?")
+        lines.append(f"\n📍 **{authority}** — {summary['total']} nearby records, {rate}% approval rate.")
+
+    lines.append("\n✅ Your preparation brief is ready for download.")
+    lines.append("\n*Informational preparation support only — not legal, planning, architectural, or financial advice.*")
+    return "\n".join(lines)
+
 
 def _resolve_and_fetch(state: PlanningState, errors: list[str]) -> dict[str, Any]:
     """Shared data-fetching logic: resolve authority, fetch records, evidence.
@@ -723,11 +811,12 @@ def advisor_node(state: PlanningState) -> PlanningState:
             profile, _ = update_profile(profile, question)
 
         # Check if we have enough
-        if intake_complete(profile):
+        authority = resolved.get("authority", "")
+        if intake_complete(profile, authority=authority):
             intake_phase = "complete"
         else:
             # Ask next batch of questions
-            questions = next_questions(profile, area_profile, guidance_hints)
+            questions = next_questions(profile, area_profile, guidance_hints, authority=authority)
             if not questions:
                 # All fields answered or skippable
                 intake_phase = "complete"
@@ -755,20 +844,10 @@ def advisor_node(state: PlanningState) -> PlanningState:
             resolved["precedents"] = find_precedents(resolved["records"], ctype)
             merged = {**state, **resolved}
 
-        # Generate enriched advice + brief
-        merged_with_profile = {**merged, "intake_profile": profile, "intake_area_profile": area_profile or {}}
-
-        if os.environ.get("OPENAI_API_KEY"):
-            try:
-                advice = scrub_output(_ask_llm(merged_with_profile))
-            except Exception as e:
-                errors.append(f"LLM call failed: {e}")
-                advice = _fallback_advice(merged_with_profile)
-                resolved["errors"] = errors
-        else:
-            advice = _fallback_advice(merged_with_profile)
-
         brief = _build_draft_brief({**merged, "intake_profile": profile, "intake_area_profile": area_profile or {}})
+
+        # Build a concise intake summary — not a full advisor research response
+        advice = _intake_summary(profile, merged)
 
         # Only offer the Galway form fill when the authority is Galway City Council
         authority = merged.get("authority", "")
@@ -807,22 +886,59 @@ def advisor_node(state: PlanningState) -> PlanningState:
                 "intake_personal": personal,
             }
         elif opt_in is False:
-            # User declined — done, keep the brief as-is
-            return {
+            # User declined personal details — still generate the Galway form
+            # with project details only (no personal fields)
+            authority = merged.get("authority", "")
+            is_galway = "galway city" in authority.lower()
+            filled_pdf = b""
+            if is_galway:
+                from agents.form_fill import fill_form
+                try:
+                    filled_pdf = fill_form(profile)
+                except Exception as e:
+                    errors.append(f"Form fill failed: {e}")
+
+            result = {
                 **resolved,
-                "advice": "No problem. Your preparation brief is ready for download. "
-                          "You can fill in the personal details on the printed form yourself.",
+                "advice": "No problem. Your preparation brief is ready for download."
+                          + (" I've also pre-filled the Galway application form with your project details — you can add your personal information on the printed form yourself." if filled_pdf else ""),
                 "intake_phase": "done",
                 "intake_profile": profile,
                 "intake_area_profile": area_profile or {},
                 "intake_guidance_hints": guidance_hints or {},
             }
+            if filled_pdf:
+                result["filled_form_pdf"] = filled_pdf
+            return result
         else:
-            # Unclear answer — ask again
+            # Not a clear yes/no — the user might be answering the LLM's
+            # follow-up questions about the project (e.g. "semi-detached,
+            # existing house to demolish"). Absorb any project details,
+            # then give a brief focused answer instead of the full advisor flow.
+            profile, extracted = update_profile(profile, question)
+
+            # Summarise what we have so the user sees their data is captured
+            filled = {k: v for k, v in profile.items() if v}
+            if filled:
+                summary_lines = []
+                for k, v in filled.items():
+                    label = k.replace("_", " ").title()
+                    summary_lines.append(f"- {label}: {v}")
+                profile_summary = "\n".join(summary_lines)
+                advice = (
+                    f"Got it — here's what I have for your project so far:\n\n{profile_summary}\n\n"
+                    "The preparation brief and form will be based on these details. "
+                    "If anything needs correcting, just tell me."
+                )
+            else:
+                advice = "I've noted your answer."
+
+            # Re-append the yes/no question
+            advice += "\n\n---\n\nWould you like me to pre-fill the application form with your personal details too? (yes/no)"
+
             return {
                 **resolved,
-                "advice": "I didn't catch that — would you like me to fill in your personal details "
-                          "on the application form? Just say **yes** or **no**.",
+                "advice": advice,
                 "intake_phase": "offer_personal",
                 "intake_profile": profile,
                 "intake_area_profile": area_profile or {},
@@ -891,10 +1007,12 @@ def advisor_node(state: PlanningState) -> PlanningState:
         "how to apply", "application process", "steps to", "generate a draft",
         "generate a brief", "generate a guide", "create a brief", "create a guide",
         "give me a guide", "give me a brief", "summary", "preparation",
-        "draft for me",
+        "draft for me", "where is my", "my brief",
     ))
     ctype = merged.get("construction_type", "")
-    if is_preparation_question and (ctype or "new" in question_lower or "house" in question_lower or "dwelling" in question_lower):
+    # If user explicitly asks for their brief/guide/download, always generate it
+    explicitly_wants_brief = any(w in question_lower for w in ("where is my", "my brief", "download", "give me a brief", "generate a brief", "draft for me"))
+    if explicitly_wants_brief or (is_preparation_question and (ctype or "new" in question_lower or "house" in question_lower or "dwelling" in question_lower)):
         resolved["draft_brief"] = _build_draft_brief(merged)
 
     # Preserve intake state across turns

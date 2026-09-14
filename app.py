@@ -486,7 +486,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 st.write(prompt)
 
         # Intercept greetings and small talk — no need to call the agent
-        from agents.guardrails import is_small_talk, GREETING_RESPONSE
+        from agents.guardrails import is_small_talk, GREETING_RESPONSE, is_off_topic, OFF_TOPIC_RESPONSE
 
         # Questions about the app rather than about planning - "which model are
         # you using?" - have no route, so they were landing in clarify. Answered
@@ -499,7 +499,13 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             with history:
                 with st.chat_message("assistant"):
                     st.write(content)
-        elif is_small_talk(prompt):
+        elif is_off_topic(prompt):
+            content = OFF_TOPIC_RESPONSE
+            st.session_state.messages.append({"role": "assistant", "content": content})
+            with history:
+                with st.chat_message("assistant"):
+                    st.markdown(_linkify(content), unsafe_allow_html=True)
+        elif is_small_talk(prompt, has_history=len(st.session_state.messages) > 0):
             content = GREETING_RESPONSE
             st.session_state.messages.append({"role": "assistant", "content": content})
             with history:
@@ -566,8 +572,8 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 draft_brief = result.get("draft_brief", "")
                 if draft_brief:
                     st.session_state["last_draft_brief"] = draft_brief
-                else:
-                    # Don't carry forward the brief from a previous question
+                elif "brief" not in answer.lower() and "download" not in answer.lower():
+                    # Only clear the brief if the response doesn't reference it
                     st.session_state.pop("last_draft_brief", None)
 
                 filled_form = result.get("filled_form_pdf", b"")
