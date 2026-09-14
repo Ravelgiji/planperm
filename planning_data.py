@@ -20,10 +20,29 @@ OUT_FIELDS = [
     "DevelopmentDescription",
     "DevelopmentAddress",
     "ApplicationType",
+    "ApplicationStatus",
     "Decision",
     "ReceivedDate",
     "DecisionDate",
+    "DecisionDueDate",
+    "GrantDate",
+    "ExpiryDate",
+    "WithdrawnDate",
     "LinkAppDetails",
+    # Further Information (iterations between applicant and authority)
+    "FIRequestDate",
+    "FIRecDate",
+    # Appeal
+    "AppealRefNumber",
+    "AppealStatus",
+    "AppealDecision",
+    "AppealDecisionDate",
+    "AppealSubmittedDate",
+    # Site and building metrics
+    "AreaofSite",
+    "FloorArea",
+    "NumResidentialUnits",
+    "OneOffHouse",
 ]
 
 
@@ -141,12 +160,32 @@ def _parse_feature(feature: dict[str, Any], lat: float, lon: float) -> dict[str,
         "lat": application_lat,
         "lon": application_lon,
         "application_type": str(attributes.get("ApplicationType") or ""),
+        "application_status": str(attributes.get("ApplicationStatus") or ""),
         "description": str(attributes.get("DevelopmentDescription") or ""),
         "date_received": epoch_to_date(attributes.get("ReceivedDate")),
         "date_decided": epoch_to_date(attributes.get("DecisionDate")),
+        "date_decision_due": epoch_to_date(attributes.get("DecisionDueDate")),
+        "date_granted": epoch_to_date(attributes.get("GrantDate")),
+        "date_expiry": epoch_to_date(attributes.get("ExpiryDate")),
+        "date_withdrawn": epoch_to_date(attributes.get("WithdrawnDate")),
         "decision": normalize_decision(str(attributes.get("Decision") or "")),
+        "decision_raw": str(attributes.get("Decision") or ""),
         "link": source_url(attributes.get("LinkAppDetails"), attributes.get("OBJECTID")),
         "distance_km": round(distance_km(lat, lon, application_lat, application_lon), 2),
+        # Further Information
+        "fi_request_date": epoch_to_date(attributes.get("FIRequestDate")),
+        "fi_response_date": epoch_to_date(attributes.get("FIRecDate")),
+        # Appeal
+        "appeal_ref": str(attributes.get("AppealRefNumber") or ""),
+        "appeal_status": str(attributes.get("AppealStatus") or ""),
+        "appeal_decision": str(attributes.get("AppealDecision") or ""),
+        "appeal_decision_date": epoch_to_date(attributes.get("AppealDecisionDate")),
+        "appeal_submitted_date": epoch_to_date(attributes.get("AppealSubmittedDate")),
+        # Metrics
+        "site_area_ha": attributes.get("AreaofSite"),
+        "floor_area_sqm": attributes.get("FloorArea"),
+        "residential_units": attributes.get("NumResidentialUnits"),
+        "one_off_house": str(attributes.get("OneOffHouse") or ""),
     }
 
 

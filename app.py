@@ -320,6 +320,20 @@ def strip_route_prefix(message: dict[str, Any]) -> str:
     content = str(message.get("content") or "")
     if message.get("role") != "assistant" or not content.startswith("**Routed to:"):
         return content
+
+
+def _linkify(text: str) -> str:
+    """Convert markdown links to HTML that opens in a new tab.
+
+    Streamlit's st.write renders [text](url) as plain <a> tags which trigger
+    a rerun on first click. Using st.markdown with target=_blank avoids this.
+    """
+    import re
+    return re.sub(
+        r'\[([^\]]+)\]\(([^)]+)\)',
+        r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
+        text,
+    )
     _, _, rest = content.partition("\n\n")
     return rest or content
 
@@ -460,7 +474,10 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             )
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
-                st.write(message["content"])
+                if message["role"] == "assistant":
+                    st.markdown(_linkify(message["content"]), unsafe_allow_html=True)
+                else:
+                    st.write(message["content"])
 
     if prompt := (st.session_state.pop("prefill_question", None) or st.chat_input("Ask PlanPerm", key="assistant_prompt")):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -487,7 +504,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             st.session_state.messages.append({"role": "assistant", "content": content})
             with history:
                 with st.chat_message("assistant"):
-                    st.write(content)
+                    st.markdown(_linkify(content), unsafe_allow_html=True)
         else:
             try:
                 # Pass cached context so follow-ups skip expensive HTTP calls
@@ -565,7 +582,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             st.session_state.messages.append({"role": "assistant", "content": content})
             with history:
                 with st.chat_message("assistant"):
-                    st.write(content)
+                    st.markdown(_linkify(content), unsafe_allow_html=True)
 
     if st.session_state.get("last_draft_brief"):
         from agents.pdf_brief import brief_to_pdf

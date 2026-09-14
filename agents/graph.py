@@ -82,6 +82,12 @@ class PlanningState(TypedDict, total=False):
 
 
 def _route(state: PlanningState) -> str:
+    # Mid-intake: bypass the semantic router, go straight to advisor.
+    # "4 bedrooms, mains water" doesn't look like a planning question to the
+    # router, but the advisor's intake loop knows exactly what to do with it.
+    phase = state.get("intake_phase", "idle")
+    if phase in ("gathering", "offer_personal", "gathering_personal"):
+        return "advisor"
     if state.get("question"):
         return "semantic_router"
     if state.get("pdf_path"):

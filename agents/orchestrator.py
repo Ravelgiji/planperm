@@ -189,7 +189,10 @@ def semantic_router_node(state: dict[str, Any]) -> dict[str, Any]:
             "secondary_route": "none",
         }
     elif decision["confidence"] == "low" or decision["split_task"]:
-        decision["route"] = "clarify"
+        # Low-confidence advisor is still better than clarify — the advisor
+        # handles vague questions well. Only bounce non-advisor low-confidence.
+        if decision["route"] != "advisor":
+            decision["route"] = "clarify"
     return {"orchestrator": decision}
 
 

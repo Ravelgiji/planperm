@@ -92,6 +92,9 @@ HOW TO RESPOND:
 WHAT YOU KNOW:
 - The user's site location, council, and jurisdiction.
 - Nearby planning records with decisions, descriptions, addresses, dates, and links.
+- Further Information (FI) dates: when the authority requested more info and when the applicant responded. This tells you how many iterations happened.
+- Appeal data: whether an application was appealed, the appeal status, decision, and dates.
+- Building metrics: floor area (sqm), site area (hectares), number of residential units.
 - Spatial candidates: records within 100m of the pin.
 - Keyword-matched precedents: similar applications to what the user described.
 - The council's published application guidance (may be outdated — say so).
@@ -107,6 +110,39 @@ RULES:
 - When a record was refused and you don't know the specific reason, say: "The refusal reason is not in the data I have — check the original record for the decision details" and include the link.
 - End with: "Informational preparation support only — not legal, planning, architectural, or financial advice."
 """
+
+
+def _fmt_record(r: dict, include_distance: bool = True) -> str:
+    """One-line summary of a record with all available fields."""
+    parts = [r.get("application_ref", "?")]
+    if r.get("address"):
+        parts.append(r["address"])
+    if include_distance and r.get("distance_km") is not None:
+        parts.append(f"{r['distance_km']}km")
+    parts.append(r.get("decision", "?"))
+    if r.get("date_received"):
+        parts.append(f"received {r['date_received']}")
+    if r.get("date_decided"):
+        parts.append(f"decided {r['date_decided']}")
+    parts.append(r.get("description", "")[:180])
+    # New fields: FI, appeal, metrics
+    if r.get("fi_request_date"):
+        fi = f"FI requested {r['fi_request_date']}"
+        if r.get("fi_response_date"):
+            fi += f", responded {r['fi_response_date']}"
+        parts.append(fi)
+    if r.get("appeal_status") and r["appeal_status"].strip():
+        appeal = f"Appeal: {r['appeal_status']}"
+        if r.get("appeal_decision"):
+            appeal += f" ({r['appeal_decision']})"
+        parts.append(appeal)
+    if r.get("floor_area_sqm") is not None:
+        parts.append(f"floor area: {r['floor_area_sqm']} sqm")
+    if r.get("site_area_ha") is not None:
+        parts.append(f"site: {r['site_area_ha']} ha")
+    if r.get("link"):
+        parts.append(f"link: {r['link']}")
+    return "  - " + " | ".join(str(p) for p in parts)
 
 
 def _build_context(state: PlanningState) -> str:
@@ -140,7 +176,22 @@ def _build_context(state: PlanningState) -> str:
     if candidates:
         parts.append("\nSpatial candidates (records within 100m of the pin):")
         for c in candidates[:8]:
-            parts.append(f"  - {c['ref']} | {c['decision']} | {c.get('address', '')} | {c['distance_m']}m | received {c.get('date_received', '?')} | decided {c.get('date_decided', '?')} | {c['description'][:180]} | link: {c.get('link', '')}")
+            # candidates have a different shape — adapt
+            parts.append(f"  - {c['ref']} | {c['decision']} | {c.get('address', '')} | {c['distance_m']}m | {c['description'][:180]} | link: {c.get('link', '')}")
+
+    # If the user mentions a specific reference number, find it and include it
+    # with all fields so the LLM can answer detailed questions about it.
+    question = state.get("question", "")
+    records = state.get("records") or []
+    if question and records:
+        import re as _re
+        ref_matches = _re.findall(r"\b(\d{4,6})\b", question)
+        if ref_matches:
+            for ref in ref_matches:
+                match = next((r for r in records if ref in r.get("application_ref", "")), None)
+                if match:
+                    parts.append(f"\nSPECIFIC RECORD requested by user (ref {ref}):")
+                    parts.append(_fmt_record(match, include_distance=True))
 
     # Include more records by decision type so the LLM can answer specific questions
     records = state.get("records") or []
@@ -148,24 +199,60 @@ def _build_context(state: PlanningState) -> str:
         def _date_sort_key(r: dict) -> str:
             return r.get("date_received") or r.get("date_decided") or "0000-00-00"
 
-        refused = sorted([r for r in records if r["decision"] == "REFUSED"], key=_date_sort_key, reverse=True)
-        granted = sorted([r for r in records if r["decision"] == "GRANTED"], key=_date_sort_key, reverse=True)
-        pending = sorted([r for r in records if r["decision"] == "PENDING"], key=_date_sort_key, reverse=True)
+        # When the user has stated an intent (construction type or intake profile),
+        # filter to similar applications so "show me nearby" returns relevant ones.
+        # Without context, show all: pending first, then recent granted/refused.
+        ctype = state.get("construction_type", "")
+        profile_type = (state.get("intake_profile") or {}).get("development_type", "")
+        search_phrase = ctype or profile_type
 
-        if refused:
-            parts.append(f"\nREFUSED applications nearby ({len(refused)} total, newest first):")
-            for r in refused[:10]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | decided {r.get('date_decided', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
+        if search_phrase:
+            from agents.helpers import find_precedents as _find_prec
+            similar = _find_prec(records, search_phrase, limit=30)
+            similar_refs = {r["application_ref"] for r in similar}
 
-        if granted:
-            parts.append(f"\nGRANTED applications nearby ({len(granted)} total, newest first):")
-            for r in granted[:8]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | decided {r.get('date_decided', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
+            if similar:
+                sim_pending = sorted([r for r in similar if r["decision"] == "PENDING"], key=_date_sort_key, reverse=True)
+                sim_granted = sorted([r for r in similar if r["decision"] == "GRANTED"], key=_date_sort_key, reverse=True)
+                sim_refused = sorted([r for r in similar if r["decision"] == "REFUSED"], key=_date_sort_key, reverse=True)
 
-        if pending:
-            parts.append(f"\nPENDING applications nearby ({len(pending)} total, newest first):")
-            for r in pending[:5]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
+                parts.append(f"\nSIMILAR applications to \"{search_phrase}\" ({len(similar)} found):")
+                if sim_pending:
+                    parts.append(f"  PENDING ({len(sim_pending)}):")
+                    for r in sim_pending[:5]:
+                        parts.append(_fmt_record(r))
+                if sim_granted:
+                    parts.append(f"  GRANTED ({len(sim_granted)}):")
+                    for r in sim_granted[:8]:
+                        parts.append(_fmt_record(r))
+                if sim_refused:
+                    parts.append(f"  REFUSED ({len(sim_refused)}):")
+                    for r in sim_refused[:6]:
+                        parts.append(_fmt_record(r))
+            else:
+                parts.append(f"\nNo similar applications found for \"{search_phrase}\". Showing all nearby:")
+                search_phrase = ""  # fall through to the generic listing
+
+        if not search_phrase:
+            # Generic listing: pending first, then recent granted, then refused
+            pending = sorted([r for r in records if r["decision"] == "PENDING"], key=_date_sort_key, reverse=True)
+            granted = sorted([r for r in records if r["decision"] == "GRANTED"], key=_date_sort_key, reverse=True)
+            refused = sorted([r for r in records if r["decision"] == "REFUSED"], key=_date_sort_key, reverse=True)
+
+            if pending:
+                parts.append(f"\nPENDING applications nearby ({len(pending)} total, newest first):")
+                for r in pending[:8]:
+                    parts.append(_fmt_record(r))
+
+            if granted:
+                parts.append(f"\nGRANTED applications nearby ({len(granted)} total, newest first):")
+                for r in granted[:6]:
+                    parts.append(_fmt_record(r))
+
+            if refused:
+                parts.append(f"\nREFUSED applications nearby ({len(refused)} total, newest first):")
+                for r in refused[:6]:
+                    parts.append(_fmt_record(r))
 
     precedents = state.get("precedents", [])
     if precedents:
