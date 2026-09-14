@@ -437,6 +437,12 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                         jurisdiction=cached.get("jurisdiction", ""),
                         authority_resolution=cached.get("authority_resolution", {}),
                         evidence_text=cached.get("evidence_text", ""),
+                        # Carry forward intake state for the conversation loop
+                        intake_phase=cached.get("intake_phase", "idle"),
+                        intake_profile=cached.get("intake_profile", {}),
+                        intake_area_profile=cached.get("intake_area_profile"),
+                        intake_guidance_hints=cached.get("intake_guidance_hints"),
+                        intake_personal=cached.get("intake_personal"),
                         chat_history=[
                             {"role": message["role"], "content": strip_route_prefix(message)}
                             for message in st.session_state.messages[-8:-1]
@@ -447,7 +453,10 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 st.session_state["agent_cache"] = {
                     k: result[k] for k in ("authority", "jurisdiction", "authority_resolution",
                                              "evidence_text", "records", "summary", "sources",
-                                             "candidates", "precedents", "checklist")
+                                             "candidates", "precedents", "checklist",
+                                             "intake_phase", "intake_profile",
+                                             "intake_area_profile", "intake_guidance_hints",
+                                             "intake_personal")
                     if k in result
                 }
 
@@ -474,6 +483,12 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                     # Don't carry forward the brief from a previous question
                     st.session_state.pop("last_draft_brief", None)
 
+                filled_form = result.get("filled_form_pdf", b"")
+                if filled_form:
+                    st.session_state["last_filled_form"] = filled_form
+                else:
+                    st.session_state.pop("last_filled_form", None)
+
             except Exception as exc:
                 content = f"⚠️ Something went wrong while processing your question. Please try again.\n\n*Detail: {type(exc).__name__}*"
 
@@ -489,6 +504,13 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             "⬇ Download preparation brief (PDF)",
             data=pdf_bytes,
             file_name="planperm_preparation_brief.pdf",
+            mime="application/pdf",
+        )
+    if st.session_state.get("last_filled_form"):
+        st.download_button(
+            "⬇ Download pre-filled application form (PDF)",
+            data=st.session_state["last_filled_form"],
+            file_name="planperm_galway_application.pdf",
             mime="application/pdf",
         )
 

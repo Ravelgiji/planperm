@@ -21,6 +21,27 @@ from agents.helpers import (
     site_candidates,
 )
 from agents.guardrails import HARDENING_SUFFIX, sanitise_input, scrub_output
+from agents.intake import (
+    INTAKE_FIELDS,
+    empty_profile,
+    extract_answers,
+    format_questions,
+    is_complete as intake_complete,
+    is_preparation_intent,
+    mine_guidance,
+    mine_records,
+    missing_fields,
+    next_questions,
+    update_profile,
+    # Personal details (phase 2)
+    OFFER_PERSONAL_TEXT,
+    empty_personal,
+    format_personal_questions,
+    is_personal_opt_in,
+    next_personal_questions,
+    personal_complete,
+    update_personal,
+)
 from planning_data import fetch_nearby_applications, summarize_applications
 
 
@@ -46,6 +67,13 @@ class PlanningState(TypedDict, total=False):
     draft_text: str
     draft_review: str
     errors: list[str]
+    # Intake conversation loop
+    intake_phase: str           # "idle" | "gathering" | "complete" | "offer_personal" | "gathering_personal" | "done"
+    intake_profile: dict[str, Any]
+    intake_area_profile: dict[str, Any]
+    intake_guidance_hints: dict[str, Any]
+    intake_personal: dict[str, Any]
+    filled_form_pdf: bytes
 
 
 # -- Prompts -------------------------------------------------------------------
@@ -112,29 +140,32 @@ def _build_context(state: PlanningState) -> str:
     if candidates:
         parts.append("\nSpatial candidates (records within 100m of the pin):")
         for c in candidates[:8]:
-            parts.append(f"  - {c['ref']} | {c['decision']} | {c.get('address', '')} | {c['distance_m']}m | {c['description'][:200]} | link: {c.get('link', '')}")
+            parts.append(f"  - {c['ref']} | {c['decision']} | {c.get('address', '')} | {c['distance_m']}m | received {c.get('date_received', '?')} | decided {c.get('date_decided', '?')} | {c['description'][:180]} | link: {c.get('link', '')}")
 
     # Include more records by decision type so the LLM can answer specific questions
     records = state.get("records") or []
     if records:
-        refused = [r for r in records if r["decision"] == "REFUSED"]
-        granted = [r for r in records if r["decision"] == "GRANTED"]
-        pending = [r for r in records if r["decision"] == "PENDING"]
+        def _date_sort_key(r: dict) -> str:
+            return r.get("date_received") or r.get("date_decided") or "0000-00-00"
+
+        refused = sorted([r for r in records if r["decision"] == "REFUSED"], key=_date_sort_key, reverse=True)
+        granted = sorted([r for r in records if r["decision"] == "GRANTED"], key=_date_sort_key, reverse=True)
+        pending = sorted([r for r in records if r["decision"] == "PENDING"], key=_date_sort_key, reverse=True)
 
         if refused:
-            parts.append(f"\nREFUSED applications nearby ({len(refused)} total, showing closest {min(len(refused), 10)}):")
+            parts.append(f"\nREFUSED applications nearby ({len(refused)} total, newest first):")
             for r in refused[:10]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | decided {r.get('date_decided', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
 
         if granted:
-            parts.append(f"\nGRANTED applications nearby ({len(granted)} total, showing closest {min(len(granted), 8)}):")
+            parts.append(f"\nGRANTED applications nearby ({len(granted)} total, newest first):")
             for r in granted[:8]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | decided {r.get('date_decided', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
 
         if pending:
-            parts.append(f"\nPENDING applications nearby ({len(pending)} total, showing closest {min(len(pending), 5)}):")
+            parts.append(f"\nPENDING applications nearby ({len(pending)} total, newest first):")
             for r in pending[:5]:
-                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | {r['description'][:200]} | link: {r.get('link', '')}")
+                parts.append(f"  - {r['application_ref']} | {r.get('address', '')} | {r.get('distance_km', '?')}km | received {r.get('date_received', '?')} | {r['description'][:180]} | link: {r.get('link', '')}")
 
     precedents = state.get("precedents", [])
     if precedents:
@@ -157,6 +188,28 @@ def _build_context(state: PlanningState) -> str:
         parts.append("\nAuthority source links:")
         for s in sources:
             parts.append(f"  - {s['title']}: {s['url']}")
+
+    # Include intake profile if available — the user's specific project details
+    profile = state.get("intake_profile") or {}
+    profile_items = {k: v for k, v in profile.items() if v}
+    if profile_items:
+        parts.append("\nUser's project details (gathered through intake):")
+        for k, v in profile_items.items():
+            label = k.replace("_", " ").title()
+            parts.append(f"  - {label}: {v}")
+
+    area_prof = state.get("intake_area_profile") or {}
+    if area_prof:
+        parts.append("\nArea analysis (from granted applications nearby):")
+        if area_prof.get("typical_storeys"):
+            parts.append(f"  - Most common: {area_prof['typical_storeys']}-storey")
+        if area_prof.get("typical_bedrooms"):
+            parts.append(f"  - Most common: {area_prof['typical_bedrooms']} bedrooms")
+        if area_prof.get("typical_area_sqm"):
+            lo, hi = area_prof.get("area_range_sqm", (0, 0))
+            parts.append(f"  - Floor area: median {area_prof['typical_area_sqm']} sqm (range {lo}-{hi})")
+        if area_prof.get("common_dev_types"):
+            parts.append(f"  - Common types: {', '.join(area_prof['common_dev_types'])}")
 
     return "\n".join(parts)
 
@@ -266,6 +319,66 @@ def _build_draft_brief(state: PlanningState) -> str:
     if condition:
         lines.append(f"**Site condition:** {condition}  ")
     lines.append("")
+
+    # --- Your project (from intake profile) ---
+    profile = state.get("intake_profile") or {}
+    area_prof = state.get("intake_area_profile") or {}
+    has_profile = any(profile.get(k) for k in profile)
+    if has_profile:
+        lines.append("## Your project\n")
+        lines.append("These are the details you provided about your planned development.\n")
+        _profile_labels = {
+            "development_type": "Development type",
+            "storeys": "Storeys",
+            "bedrooms": "Bedrooms",
+            "floor_area_sqm": "Floor area",
+            "garage": "Garage",
+            "site_access": "Site access",
+            "water_supply": "Water supply",
+            "wastewater": "Wastewater",
+            "site_area_hectares": "Site area",
+            "existing_structures": "Existing structures",
+        }
+        for key, label in _profile_labels.items():
+            val = profile.get(key)
+            if val:
+                suffix = ""
+                if key == "floor_area_sqm":
+                    suffix = " sqm"
+                elif key == "site_area_hectares":
+                    suffix = " hectares"
+                elif key == "storeys":
+                    suffix = " storey" if val == "1" else " storeys"
+                    val = ""  # included in suffix
+                lines.append(f"- **{label}:** {val}{suffix}".replace(":  ", ": ").strip())
+        lines.append("")
+
+        # Area comparison
+        if area_prof:
+            lines.append("### How your project compares to the area\n")
+            if area_prof.get("typical_storeys") and profile.get("storeys"):
+                user_s = profile["storeys"]
+                typical_s = area_prof["typical_storeys"]
+                if user_s == typical_s:
+                    lines.append(f"- Your {user_s}-storey plan matches the most common pattern nearby.")
+                else:
+                    dist = area_prof.get("storey_distribution", {})
+                    dist_text = ", ".join(f"{k}-storey ({v})" for k, v in dist.items())
+                    lines.append(f"- Your plan is {user_s}-storey. Nearby granted: {dist_text}.")
+            if area_prof.get("typical_area_sqm") and profile.get("floor_area_sqm"):
+                try:
+                    user_area = int(profile["floor_area_sqm"])
+                    typical = area_prof["typical_area_sqm"]
+                    lo, hi = area_prof.get("area_range_sqm", (0, 0))
+                    if lo <= user_area <= hi:
+                        lines.append(f"- Your floor area ({user_area} sqm) is within the range of nearby granted applications ({lo}–{hi} sqm, median {typical}).")
+                    elif user_area > hi:
+                        lines.append(f"- Your floor area ({user_area} sqm) exceeds nearby granted applications (range {lo}–{hi} sqm). Consider whether this may attract scrutiny.")
+                except (ValueError, TypeError):
+                    pass
+            if area_prof.get("garage_prevalence") and profile.get("garage"):
+                lines.append(f"- {area_prof['garage_prevalence']}% of nearby granted applications include a garage.")
+            lines.append("")
 
     # --- What the numbers say ---
     if summary and summary.get("total"):
@@ -394,27 +507,18 @@ def _build_draft_brief(state: PlanningState) -> str:
 
 # -- LangGraph node ------------------------------------------------------------
 
-def advisor_node(state: PlanningState) -> PlanningState:
-    """LangGraph node: resolve authority, fetch records, get evidence, generate advice.
+def _resolve_and_fetch(state: PlanningState, errors: list[str]) -> dict[str, Any]:
+    """Shared data-fetching logic: resolve authority, fetch records, evidence.
 
-    Reuses data already in state (from a previous turn or the UI) so follow-up
-    questions skip the expensive HTTP calls and go straight to the LLM.
+    Reuses data already in state so follow-up turns skip expensive HTTP calls.
+    Returns a dict of resolved fields to merge into state.
     """
-    errors = list(state.get("errors", []))
     lat = state["lat"]
     lng = state["lng"]
     radius = state.get("radius_km", 2.0)
     ctype = state.get("construction_type", "")
 
-    # Guard: sanitise user input before anything touches the LLM
-    question = state.get("question", "")
-    if question:
-        cleaned, blocked = sanitise_input(question)
-        if blocked:
-            return {"advice": cleaned, "errors": errors}
-        state = {**state, "question": cleaned}
-
-    # 1. Resolve authority — reuse if already in state
+    # 1. Resolve authority
     if state.get("authority"):
         authority = state["authority"]
         jurisdiction = state.get("jurisdiction", "Republic of Ireland")
@@ -426,7 +530,7 @@ def advisor_node(state: PlanningState) -> PlanningState:
         if resolution["status"] != "resolved":
             errors.append(f"Authority resolution: {resolution.get('note', 'unknown issue')}")
 
-    # 2. Fetch nearby records — reuse if already in state
+    # 2. Fetch nearby records
     records = state.get("records")
     if records is None or len(records) == 0:
         try:
@@ -439,7 +543,7 @@ def advisor_node(state: PlanningState) -> PlanningState:
     candidates = site_candidates(records, lat, lng)
     precedents = find_precedents(records, ctype) if ctype else []
 
-    # 3. Get authority guidance — reuse if already in state
+    # 3. Authority guidance
     evidence_text = state.get("evidence_text", "")
     if not evidence_text and authority:
         guidance_url = authority_guidance_url(authority)
@@ -450,11 +554,11 @@ def advisor_node(state: PlanningState) -> PlanningState:
             else:
                 errors.append(f"Guidance retrieval: {ev.get('detail', ev['status'])}")
 
-    # 4. Build checklist and source links
+    # 4. Checklist and sources
     sources = authority_sources(authority) if authority else []
     checklist = preparation_checklist(authority, has_evidence=bool(evidence_text))
 
-    state_update: PlanningState = {
+    return {
         "jurisdiction": jurisdiction,
         "authority": authority,
         "authority_resolution": resolution,
@@ -468,21 +572,233 @@ def advisor_node(state: PlanningState) -> PlanningState:
         "errors": errors,
     }
 
-    # 5. Generate advice
-    merged = {**state, **state_update}
+
+def advisor_node(state: PlanningState) -> PlanningState:
+    """LangGraph node: resolve authority, fetch records, get evidence, generate advice.
+
+    Supports a multi-turn intake conversation:
+    - When the user expresses preparation intent ("I want to build a house"),
+      the node starts gathering details before generating the brief.
+    - Each turn: extract answers from user text → check completeness → ask more
+      questions or generate the enriched brief.
+    - Non-preparation questions bypass intake and get direct advice as before.
+    """
+    errors = list(state.get("errors", []))
+
+    # Guard: sanitise user input
+    question = state.get("question", "")
+    if question:
+        cleaned, blocked = sanitise_input(question)
+        if blocked:
+            return {"advice": cleaned, "errors": errors}
+        state = {**state, "question": cleaned}
+        question = cleaned
+
+    # Fetch shared data (authority, records, evidence)
+    resolved = _resolve_and_fetch(state, errors)
+    merged = {**state, **resolved}
+
+    # -- Intake conversation loop --
+    intake_phase = state.get("intake_phase", "idle")
+    profile = state.get("intake_profile") or {}
+    area_profile = state.get("intake_area_profile")
+    guidance_hints = state.get("intake_guidance_hints")
+
+    # Detect preparation intent on fresh questions (phase=idle)
+    if intake_phase == "idle" and question and is_preparation_intent(question):
+        intake_phase = "gathering"
+        profile = empty_profile()
+
+        # Pre-fill development_type from the question if detectable
+        from agents.intake import extract_answers_regex
+        initial = extract_answers_regex(question)
+        for k, v in initial.items():
+            if v:
+                profile[k] = v
+
+        # Also carry construction_type into profile if set
+        ctype = state.get("construction_type", "")
+        if ctype and not profile.get("development_type"):
+            profile["development_type"] = ctype
+
+    # Mine records and guidance (once, on first gathering turn)
+    if intake_phase == "gathering":
+        records = resolved.get("records") or []
+        evidence = resolved.get("evidence_text", "")
+
+        if area_profile is None:
+            area_profile = mine_records(records)
+        if guidance_hints is None:
+            guidance_hints = mine_guidance(evidence)
+
+        # Extract answers from the current question (if we're mid-conversation)
+        if question and any(not profile.get(f[0]) for f in INTAKE_FIELDS):
+            profile, _ = update_profile(profile, question)
+
+        # Check if we have enough
+        if intake_complete(profile):
+            intake_phase = "complete"
+        else:
+            # Ask next batch of questions
+            questions = next_questions(profile, area_profile, guidance_hints)
+            if not questions:
+                # All fields answered or skippable
+                intake_phase = "complete"
+            else:
+                advice_text = format_questions(questions, area_profile)
+
+                return {
+                    **resolved,
+                    "advice": advice_text,
+                    "intake_phase": "gathering",
+                    "intake_profile": profile,
+                    "intake_area_profile": area_profile,
+                    "intake_guidance_hints": guidance_hints,
+                }
+
+    # -- Generate output --
+    if intake_phase == "complete":
+        # Enrich construction_type from the profile
+        if profile.get("development_type"):
+            merged["construction_type"] = profile["development_type"]
+
+        # Re-find precedents with the now-known construction type
+        ctype = merged.get("construction_type", "")
+        if ctype and resolved.get("records"):
+            resolved["precedents"] = find_precedents(resolved["records"], ctype)
+            merged = {**state, **resolved}
+
+        # Generate enriched advice + brief
+        merged_with_profile = {**merged, "intake_profile": profile, "intake_area_profile": area_profile or {}}
+
+        if os.environ.get("OPENAI_API_KEY"):
+            try:
+                advice = scrub_output(_ask_llm(merged_with_profile))
+            except Exception as e:
+                errors.append(f"LLM call failed: {e}")
+                advice = _fallback_advice(merged_with_profile)
+                resolved["errors"] = errors
+        else:
+            advice = _fallback_advice(merged_with_profile)
+
+        brief = _build_draft_brief({**merged, "intake_profile": profile, "intake_area_profile": area_profile or {}})
+
+        # Only offer the Galway form fill when the authority is Galway City Council
+        authority = merged.get("authority", "")
+        is_galway = "galway city" in authority.lower()
+
+        if is_galway:
+            advice_with_offer = advice + "\n\n---\n\n" + OFFER_PERSONAL_TEXT
+            next_phase = "offer_personal"
+        else:
+            advice_with_offer = advice
+            next_phase = "done"
+
+        resolved["advice"] = advice_with_offer
+        resolved["draft_brief"] = brief
+        resolved["intake_phase"] = next_phase
+        resolved["intake_profile"] = profile
+        resolved["intake_area_profile"] = area_profile or {}
+        resolved["intake_guidance_hints"] = guidance_hints or {}
+        return resolved
+
+    # -- Phase: waiting for yes/no on personal details --
+    if intake_phase == "offer_personal":
+        opt_in = is_personal_opt_in(question)
+        if opt_in is True:
+            # Start gathering personal details
+            personal = empty_personal()
+            questions = next_personal_questions(personal)
+            advice_text = format_personal_questions(questions)
+            return {
+                **resolved,
+                "advice": advice_text,
+                "intake_phase": "gathering_personal",
+                "intake_profile": profile,
+                "intake_area_profile": area_profile or {},
+                "intake_guidance_hints": guidance_hints or {},
+                "intake_personal": personal,
+            }
+        elif opt_in is False:
+            # User declined — done, keep the brief as-is
+            return {
+                **resolved,
+                "advice": "No problem. Your preparation brief is ready for download. "
+                          "You can fill in the personal details on the printed form yourself.",
+                "intake_phase": "done",
+                "intake_profile": profile,
+                "intake_area_profile": area_profile or {},
+                "intake_guidance_hints": guidance_hints or {},
+            }
+        else:
+            # Unclear answer — ask again
+            return {
+                **resolved,
+                "advice": "I didn't catch that — would you like me to fill in your personal details "
+                          "on the application form? Just say **yes** or **no**.",
+                "intake_phase": "offer_personal",
+                "intake_profile": profile,
+                "intake_area_profile": area_profile or {},
+                "intake_guidance_hints": guidance_hints or {},
+            }
+
+    # -- Phase: gathering personal details --
+    if intake_phase == "gathering_personal":
+        personal = state.get("intake_personal") or empty_personal()
+
+        if question:
+            personal, _ = update_personal(personal, question)
+
+        if personal_complete(personal):
+            # Generate filled form PDF
+            from agents.form_fill import fill_form
+            try:
+                filled_pdf = fill_form(profile, personal)
+            except Exception as e:
+                errors.append(f"Form fill failed: {e}")
+                filled_pdf = b""
+
+            return {
+                **resolved,
+                "advice": "Your application form has been pre-filled and is ready for download. "
+                          "Review it carefully before submitting — this is a draft, not a submission.\n\n"
+                          "*Informational preparation support only — not legal, planning, "
+                          "architectural, or financial advice.*",
+                "intake_phase": "done",
+                "intake_profile": profile,
+                "intake_area_profile": area_profile or {},
+                "intake_guidance_hints": guidance_hints or {},
+                "intake_personal": personal,
+                "filled_form_pdf": filled_pdf,
+            }
+        else:
+            questions = next_personal_questions(personal)
+            if not questions:
+                intake_phase = "done"
+            else:
+                return {
+                    **resolved,
+                    "advice": format_personal_questions(questions),
+                    "intake_phase": "gathering_personal",
+                    "intake_profile": profile,
+                    "intake_area_profile": area_profile or {},
+                    "intake_guidance_hints": guidance_hints or {},
+                    "intake_personal": personal,
+                }
+
+    # -- Regular (non-intake) advisor flow --
     if os.environ.get("OPENAI_API_KEY"):
         try:
-            state_update["advice"] = scrub_output(_ask_llm(merged))
+            resolved["advice"] = scrub_output(_ask_llm(merged))
         except Exception as e:
             errors.append(f"LLM call failed: {e}")
-            state_update["advice"] = _fallback_advice(merged)
-            state_update["errors"] = errors
+            resolved["advice"] = _fallback_advice(merged)
+            resolved["errors"] = errors
     else:
-        state_update["advice"] = _fallback_advice(merged)
+        resolved["advice"] = _fallback_advice(merged)
 
-    # 6. Build downloadable preparation brief only on explicit preparation questions,
-    #    not on follow-ups about specific topics
-    question_lower = (state.get("question") or "").lower()
+    # Generate brief on explicit preparation questions (non-intake path)
+    question_lower = question.lower()
     is_preparation_question = any(w in question_lower for w in (
         "what do i need", "prepare", "brief", "checklist", "guide", "download",
         "how to apply", "application process", "steps to", "generate a draft",
@@ -490,8 +806,16 @@ def advisor_node(state: PlanningState) -> PlanningState:
         "give me a guide", "give me a brief", "summary", "preparation",
         "draft for me",
     ))
-    # Only generate if it's a broad preparation question AND construction type is known
+    ctype = merged.get("construction_type", "")
     if is_preparation_question and (ctype or "new" in question_lower or "house" in question_lower or "dwelling" in question_lower):
-        state_update["draft_brief"] = _build_draft_brief({**state, **state_update})
+        resolved["draft_brief"] = _build_draft_brief(merged)
 
-    return state_update
+    # Preserve intake state across turns
+    resolved["intake_phase"] = intake_phase
+    resolved["intake_profile"] = profile
+    if area_profile is not None:
+        resolved["intake_area_profile"] = area_profile
+    if guidance_hints is not None:
+        resolved["intake_guidance_hints"] = guidance_hints
+
+    return resolved

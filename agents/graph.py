@@ -69,6 +69,14 @@ class PlanningState(TypedDict, total=False):
     watch_sources_scanned: int
     watch_briefing: str
     watch_response: str
+    # Intake conversation loop
+    intake_phase: str           # "idle" | "gathering" | "complete" | "offer_personal" | "gathering_personal" | "done"
+    intake_profile: dict[str, Any]
+    intake_area_profile: dict[str, Any]
+    intake_guidance_hints: dict[str, Any]
+    # Personal details (phase 2, opt-in only)
+    intake_personal: dict[str, Any]
+    filled_form_pdf: bytes
     # Meta
     errors: list[str]
 
