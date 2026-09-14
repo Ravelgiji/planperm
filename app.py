@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import os
 import tempfile
 from typing import Any
 
@@ -12,6 +13,7 @@ from folium.plugins import Draw
 from streamlit_folium import st_folium
 
 from agents.graph import run as run_planning_graph
+from core import llm as llm_models
 from core.env import load_env
 from geocoder import resolve_location
 from planning_data import area_total, fetch_nearby_applications, summarize_applications
@@ -23,6 +25,11 @@ from views.watch import render_watch_control, render_watch_results
 # to create - so the key never arrived and semantic routing silently degraded
 # to the rule-based fallback. Load it before any agent import is used.
 load_env()
+
+# Newer models reject `max_tokens` and want `max_completion_tokens`. Every agent
+# passes the former, so this renames it for the models that need it - installed
+# once, here, rather than editing all seven call sites.
+llm_models.install_compatibility()
 
 
 DEFAULT_SITE = {"lat": 53.2707, "lon": -9.0568, "label": "Galway, Ireland"}
@@ -251,6 +258,56 @@ def set_site(lat: float, lon: float, label: str) -> None:
 
 def safe_text(value: Any) -> str:
     return html.escape(str(value or "—"))
+
+
+def render_model_picker() -> None:
+    """Choose the model every agent uses, and show which are rate-limited.
+
+    The allowance is per model, so a 429 on one says nothing about the next.
+    Setting PLANPERM_LLM_MODEL is enough to move the whole app: all seven call
+    sites read it when they build their request, so there is nothing to rewire.
+    """
+    st.markdown("<div class='planperm-kicker'>Model</div>", unsafe_allow_html=True)
+
+    options = [model for model, _ in llm_models.MODEL_OPTIONS]
+    descriptions = dict(llm_models.MODEL_OPTIONS)
+    spent = {row["model"]: row["retry_in_minutes"]
+             for row in llm_models.status() if not row["available"]}
+
+    current = os.environ.get("PLANPERM_LLM_MODEL", "").strip()
+    index = options.index(current) if current in options else 0
+
+    def describe(model: str) -> str:
+        text = descriptions.get(model, model)
+        minutes = spent.get(model)
+        return f"{text}  · rate-limited, {minutes}m" if minutes else text
+
+    chosen = st.selectbox(
+        "Model",
+        options=options,
+        index=index,
+        format_func=describe,
+        key="llm_model_choice",
+        label_visibility="collapsed",
+    )
+
+    # Every agent reads this when it builds a request, so the choice applies
+    # to the whole app from the next call onward.
+    os.environ["PLANPERM_LLM_MODEL"] = chosen
+
+    if spent:
+        st.markdown(
+            f"<div class='map-note'>{len(spent)} model(s) rate-limited this "
+            "session. If a reply fails, pick another - the daily allowance is "
+            "counted per model.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            "<div class='map-note'>Used by every agent. The daily allowance is "
+            "per model, so switching here is the way out of a rate limit.</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def strip_route_prefix(message: dict[str, Any]) -> str:
@@ -607,6 +664,10 @@ with controls_column:
             format_func=lambda value: f"{value:g} km",
             label_visibility="collapsed",
         )
+
+    st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+    with st.container(border=False):
+        render_model_picker()
 
     st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
     with st.container(border=False):
