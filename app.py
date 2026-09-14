@@ -17,6 +17,7 @@ from core import llm as llm_models
 from core.env import load_env
 from geocoder import resolve_location
 from planning_data import area_total, fetch_nearby_applications, summarize_applications
+from views import about
 from views.records import render_records
 from views.watch import render_watch_control, render_watch_results
 
@@ -469,7 +470,19 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
 
         # Intercept greetings and small talk — no need to call the agent
         from agents.guardrails import is_small_talk, GREETING_RESPONSE
-        if is_small_talk(prompt):
+
+        # Questions about the app rather than about planning - "which model are
+        # you using?" - have no route, so they were landing in clarify. Answered
+        # from real state, costing no request.
+        about_answer = about.answer(prompt)
+
+        if about_answer is not None:
+            content = about_answer
+            st.session_state.messages.append({"role": "assistant", "content": content})
+            with history:
+                with st.chat_message("assistant"):
+                    st.write(content)
+        elif is_small_talk(prompt):
             content = GREETING_RESPONSE
             st.session_state.messages.append({"role": "assistant", "content": content})
             with history:
