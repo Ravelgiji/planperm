@@ -683,5 +683,5 @@ with assistant_column:
 # Below the map, full width. The records list answers "what is here?" and the
 # watch findings answer "what is new?" - in that order, because the first is
 # what someone asks first.
-render_records(applications, str(site["label"]))
+render_records(applications, str(site["label"]), area_count)
 render_watch_results(site)

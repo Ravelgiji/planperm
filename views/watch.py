@@ -146,6 +146,49 @@ def _render_deadline(deadline: dict[str, Any], received: str | None = None) -> N
     )
 
 
+SORT_ORDERS = {
+    "Deadline - soonest first": "deadline",
+    "Received - newest first": "received_desc",
+    "Received - oldest first": "received_asc",
+    "Reference": "reference",
+}
+
+
+def _sort_applications(
+    applications: list[dict[str, Any]], order: str
+) -> list[dict[str, Any]]:
+    """Order the list. Rows with no usable date sort last, never first.
+
+    Sorted on `date_received_iso`, which is the date printed in the published
+    document. Deriving a year from the reference would only work for one of the
+    two formats in use - Westmeath puts the year first (26/60461), Dublin puts
+    it last (5001/26, WEB2338/26).
+    """
+    def received(application: dict[str, Any]) -> str:
+        return application.get("date_received_iso") or ""
+
+    def days_left(application: dict[str, Any]) -> tuple[int, int]:
+        deadline = application.get("deadline")
+        if not deadline:
+            return (2, 0)                       # no date printed - last
+        if not deadline.get("is_open"):
+            return (1, deadline.get("days_left", 0))   # closed - after the open ones
+        return (0, deadline.get("days_left", 0))
+
+    if order == "deadline":
+        return sorted(applications, key=days_left)
+
+    if order in ("received_desc", "received_asc"):
+        # Split so undated rows stay last whichever way the dated ones run -
+        # reversing a single sort would float them to the top.
+        dated = [a for a in applications if received(a)]
+        undated = [a for a in applications if not received(a)]
+        dated.sort(key=received, reverse=(order == "received_desc"))
+        return dated + undated
+
+    return sorted(applications, key=lambda a: a.get("file_number") or "")
+
+
 def _render_listed_applications(alert: dict[str, Any]) -> None:
     """The individual applications read out of a newly published list.
 
@@ -190,6 +233,15 @@ def _render_listed_applications(alert: dict[str, Any]) -> None:
     if True:
         if note:
             st.caption(note)
+
+        # Sort key is per alert, so two lists on screen can be ordered
+        # independently.
+        choice = st.selectbox(
+            "Order by",
+            options=list(SORT_ORDERS),
+            key=f"apps_sort_{alert.get('alert_id', 'x')}",
+        )
+        applications = _sort_applications(applications, SORT_ORDERS[choice])
         if alert.get("applications_complete") is False:
             st.warning(
                 "Extraction was partial - more file numbers appear in the document "
