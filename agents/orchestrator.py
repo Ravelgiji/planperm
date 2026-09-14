@@ -38,9 +38,10 @@ def _fallback(query: str) -> dict[str, Any]:
 
     lowered = query.lower()
     signals = {
-        "draft": ("draft", "write", "form", "document", "review"),
-        "advisor": ("advice", "advise", "permission", "exempt", "process", "appeal", "policy", "requirement"),
-        "watch": ("watch", "monitor", "alert", "notify", "track", "weekly", "monthly"),
+        "draft": ("review my pdf", "review my draft", "check my application"),
+        "advisor": ("advice", "advise", "permission", "exempt", "process", "appeal", "policy", "requirement",
+                     "generate", "brief", "guide", "prepare", "checklist", "what do i need", "draft for me"),
+        "watch": ("watch", "monitor", "alert", "notify", "track", "weekly", "monthly", "what changed", "anything new"),
         "coordinator": ("presentation", "research", "briefing", "synthesise", "synthesize"),
     }
     matches = [route for route, words in signals.items() if any(word in lowered for word in words)]
@@ -120,7 +121,7 @@ Routes:
 
 The selected site and nearby records are sufficient context for a short query such as "advise me on this"; send it to advisor, not clarify.
 
-The current Draft Agent reviews an already uploaded PDF only. Choose draft only when `pdf_uploaded` is true. If a user requests document drafting or review with no uploaded PDF, choose clarify and request an uploaded PDF. Set split_task=true and route=clarify when a user asks for independent outcomes, for example permission advice plus a separate document review. A Watch Agent may be connected separately.
+The current Draft Agent reviews an already uploaded PDF only. Choose draft only when `pdf_uploaded` is true. If a user requests document drafting or review with no uploaded PDF, choose clarify and request an uploaded PDF. IMPORTANT: if a user asks to "generate a draft", "create a brief", "give me a guide", or "prepare a summary", this is an ADVISOR task, not a draft review — the Advisor generates preparation briefs. Only route to draft when the user explicitly wants to review an existing uploaded PDF. Set split_task=true and route=clarify when a user asks for independent outcomes, for example permission advice plus a separate document review. A Watch Agent may be connected separately.
 
 Recent conversation (use it to resolve a short follow-up - "20 kms?" after a
 question about applications near a place is still that same question, with a

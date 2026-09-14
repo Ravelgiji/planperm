@@ -485,7 +485,10 @@ def advisor_node(state: PlanningState) -> PlanningState:
     question_lower = (state.get("question") or "").lower()
     is_preparation_question = any(w in question_lower for w in (
         "what do i need", "prepare", "brief", "checklist", "guide", "download",
-        "how to apply", "application process", "steps to",
+        "how to apply", "application process", "steps to", "generate a draft",
+        "generate a brief", "generate a guide", "create a brief", "create a guide",
+        "give me a guide", "give me a brief", "summary", "preparation",
+        "draft for me",
     ))
     # Only generate if it's a broad preparation question AND construction type is known
     if is_preparation_question and (ctype or "new" in question_lower or "house" in question_lower or "dwelling" in question_lower):
