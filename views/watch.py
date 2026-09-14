@@ -288,6 +288,60 @@ def _render_listed_applications(alert: dict[str, Any]) -> None:
         )
 
 
+def _render_under_watch(workspace_id: str) -> None:
+    """What the agent is holding, shown when there is nothing new to report.
+
+    A watch with nothing to say should still show its work. "Nothing has
+    changed" on its own reads as a feature that does not do anything, when in
+    fact several hundred documents are being compared on every scan.
+    """
+    import json
+
+    from core.watch_store import SNAPSHOT_DIR
+    from core.weekly_list import is_received_list
+
+    directory = SNAPSHOT_DIR / workspace_id
+    if not directory.is_dir():
+        return
+
+    documents: list[dict] = []
+    for path in directory.glob("*.json"):
+        try:
+            documents += json.loads(path.read_text(encoding="utf-8")).get("documents", [])
+        except (json.JSONDecodeError, OSError):
+            continue
+
+    if not documents:
+        return
+
+    received = [d for d in documents if is_received_list(d["title"], d["url"])]
+
+    left, right = st.columns(2)
+    with left:
+        st.metric("Documents under watch", f"{len(documents):,}")
+    with right:
+        st.metric("Lists of received applications", f"{len(received):,}")
+
+    if received:
+        st.markdown(
+            "<div class='map-note'>Each scan re-indexes these pages and compares "
+            "them against the stored snapshot. When a new list of received "
+            "applications appears, it is read and every application in it gets "
+            "an estimated observation deadline.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            "<div class='map-note'>Each scan re-indexes these pages and compares "
+            "them against the stored snapshot. None of them is a list of "
+            "received applications, so a change here reports a new document "
+            "rather than individual applications.</div>",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div class='section-rule'></div>", unsafe_allow_html=True)
+
+
 def _render_alerts(workspace_id: str) -> None:
     """Show detected changes only.
 
@@ -308,6 +362,8 @@ def _render_alerts(workspace_id: str) -> None:
     )
 
     if not changes:
+        _render_under_watch(workspace_id)
+
         # Distinguish "scanned, nothing new" from "never scanned" - the old copy
         # claimed a baseline had been captured even when none had.
         baselined = bool(snapshot_summary(workspace_id))
