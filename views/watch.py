@@ -457,6 +457,108 @@ def render_watch_control(site: dict[str, Any], radius_km: float) -> None:
 
 # -- Public: the findings, full width and collapsed, below the map -----------
 
+def _render_demo(workspace: dict[str, Any]) -> None:
+    """Let someone see a detection without waiting for the council to publish.
+
+    An authority posts its weekly list about once a week, so a freshly
+    baselined area correctly reports nothing for days. That is right, and
+    useless for checking the agent works or showing it to anyone.
+
+    This removes one document from the STORED BASELINE. Nothing upstream is
+    touched and no alert is written here - the next scan rediscovers that
+    document through the ordinary comparison: same indexing, same fingerprint,
+    same diff a real publication would trigger. Only the timing is arranged,
+    which is why the detection that follows is genuine.
+
+    What it will show depends on the authority, and the panel says so rather
+    than letting someone discover it mid-demo. A received-applications list
+    yields applications and deadlines; anything else yields only "a document
+    appeared".
+    """
+    from core.watch import fingerprint
+    from core.watch_store import SNAPSHOT_DIR, latest_snapshot, save_snapshot
+    from core.weekly_list import is_received_list
+
+    workspace_id = workspace["workspace_id"]
+    baselines = snapshot_summary(workspace_id)
+
+    if not baselines:
+        st.info(
+            "Capture a baseline first - there is nothing to rewind until the "
+            "agent has recorded what is published now."
+        )
+        return
+
+    st.markdown(
+        "<div class='map-note'>A council publishes its weekly list about once a "
+        "week, so a newly watched area reports nothing for days - correctly. To "
+        "see a detection now, rewind the stored baseline by one document and "
+        "scan again.</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Prefer a received-applications list: those are the ones the agent opens
+    # for per-application deadlines, and they make the fuller demonstration.
+    received: list[tuple[str, dict]] = []
+    other: list[tuple[str, dict]] = []
+
+    for row in baselines:
+        snapshot = latest_snapshot(workspace_id, row["source_url"])
+        if not snapshot:
+            continue
+        for document in snapshot.get("documents", []):
+            target = received if is_received_list(document["title"], document["url"]) else other
+            target.append((row["source_url"], document))
+
+    candidates = received or other
+    if not candidates:
+        st.warning("No baselined document to rewind for this area.")
+        return
+
+    source_url, document = candidates[0]
+
+    if received:
+        st.success(
+            f"This area publishes a list of received applications, so the scan "
+            f"will read it and estimate an observation deadline for every "
+            f"application in it."
+        )
+    else:
+        st.warning(
+            f"{workspace.get('authority') or 'This authority'} publishes no "
+            "machine-readable list of received applications - its lists sit "
+            "behind a JavaScript viewer. A scan here will report that a "
+            "document appeared, but cannot extract applications or deadlines "
+            "from it. Watch an area served by Westmeath or Dublin County "
+            "Council to see the full result."
+        )
+
+    st.markdown(
+        f"<div class='map-note'>Will rewind: <b>{_safe(document['title'])}</b><br>"
+        f"<span style='font-size:.72rem'>{_safe(document['url'])}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    if st.button("Rewind the baseline by one document", key="watch_demo_rewind",
+                 use_container_width=True):
+        snapshot = latest_snapshot(workspace_id, source_url) or {}
+        remaining = [
+            d for d in snapshot.get("documents", []) if d["url"] != document["url"]
+        ]
+        save_snapshot(workspace_id, source_url, remaining, fingerprint(remaining))
+        st.session_state.pop("watch_last_result", None)
+        st.success(
+            f"Baseline rewound - it now holds {len(remaining)} document(s). "
+            "Press “Scan for changes” on the left to detect it."
+        )
+
+    st.caption(
+        "This edits the local baseline only. Nothing changes at the council, no "
+        "alert is written here, and the detection that follows comes from the "
+        "same comparison a real publication would trigger."
+    )
+
+
 def render_watch_results(site: dict[str, Any]) -> None:
     """Detected changes, application deadlines, sources and data controls.
 
@@ -525,8 +627,8 @@ def render_watch_results(site: dict[str, Any]) -> None:
             "applications, and estimates the observation deadline for each one. "
             "It scans only when you press the button."
         )
-        changes_tab, sources_tab, data_tab = st.tabs(
-            ["Detected changes", "Sources watched", "Data and privacy"]
+        changes_tab, sources_tab, demo_tab, data_tab = st.tabs(
+            ["Detected changes", "Sources watched", "Try it", "Data and privacy"]
         )
 
         with changes_tab:
@@ -586,6 +688,9 @@ def render_watch_results(site: dict[str, Any]) -> None:
                     f"  <span class='map-note'>{_safe(state)}</span>",
                     unsafe_allow_html=True,
                 )
+
+        with demo_tab:
+            _render_demo(workspace)
 
         with data_tab:
             st.caption(
