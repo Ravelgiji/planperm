@@ -584,7 +584,11 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
                 with st.chat_message("assistant"):
                     st.markdown(_linkify(content), unsafe_allow_html=True)
 
-    if st.session_state.get("last_draft_brief"):
+    # Only show download buttons when the advisor isn't mid-conversation asking a question
+    last_msg = st.session_state.messages[-1]["content"] if st.session_state.messages else ""
+    advisor_is_asking = last_msg.rstrip().endswith("?") or "(yes/no)" in last_msg.lower()
+
+    if st.session_state.get("last_draft_brief") and not advisor_is_asking:
         from agents.pdf_brief import brief_to_pdf
         pdf_bytes = brief_to_pdf(st.session_state["last_draft_brief"])
         st.download_button(
@@ -593,7 +597,7 @@ def assistant_panel(site: dict[str, Any], applications: list[dict[str, Any]], ra
             file_name="planperm_preparation_brief.pdf",
             mime="application/pdf",
         )
-    if st.session_state.get("last_filled_form"):
+    if st.session_state.get("last_filled_form") and not advisor_is_asking:
         st.download_button(
             "⬇ Download pre-filled application form (PDF)",
             data=st.session_state["last_filled_form"],
